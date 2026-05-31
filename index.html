@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>異性体学習アプリ</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f5f7fa;
+            padding: 10px;
+        }
+        .container {
+            background-color: white;
+            padding: 20px 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .formula-section {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            background-color: #e0f2fe;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        /* 構造式を描画する外枠 */
+        .canvas-section {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            height: 240px;
+            position: relative; 
+            background-color: #fafafa;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        /* 構造式自体をスマホ用に縮小表示 */
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: scale(0.8);
+            transform-origin: top left;
+        }
+
+        /* 判定結果を表示するオーバーレイ */
+        .feedback-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            font-weight: bold;
+            z-index: 100;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(2px);
+        }
+        .text-incorrect { color: #ef4444; }
+        .text-complete { color: #10b981; font-size: 2.5rem;}
+
+        /* 炭素・酸素・ヒドロキシ基要素のスタイル */
+        .carbon-node {
+            position: absolute;
+            width: 60px; 
+            height: 40px;
+            line-height: 40px;
+            font-size: 2.2rem;
+            font-weight: bold;
+            text-align: left; 
+            padding-left: 5px;
+            z-index: 2;
+            margin-left: -15px;
+        }
+
+        /* 左上付き位置番号 */
+        .number-badge {
+            position: absolute;
+            left: 0px;       
+            top: -5px;       
+            font-size: 0.8rem;
+            color: #ef4444;   
+            font-weight: normal;
+            line-height: 1;
+        }
+
+        /* 現在選択中の炭素を現す赤丸の点滅 */
+        .carbon-node.selected::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -2px;
+            width: 44px;
+            height: 44px;
+            border: 2px solid #ef4444;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+            pointer-events: none;
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+
+        /* 結合線 */
+        .bond-h, .bond-v {
+            position: absolute;
+            color: #000000;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+        .bond-h { width: 20px; height: 32px; font-size: 1.8rem; } 
+        .bond-v { width: 32px; height: 20px; font-size: 1.8rem; transform: rotate(90deg); } 
+
+        /* ボタンエリア共通 */
+        .button-section, .sub-button-section, .bottom-button-section {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+        
+        .flex-nowrap {
+            flex-wrap: nowrap !important;
+        }
+
+        .hidden { display: none !important; }
+
+        button {
+            padding: 10px 8px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #7f7f7f;
+            color: white;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+        button:hover { background-color: #5c5c5c; }
+
+        /* 「側鎖を追加」ボタン専用の色設定 */
+        button.add-side-btn {
+            background-color: #2563eb;
+        }
+        button.add-side-btn:hover {
+            background-color: #1d4ed8; 
+        }        
+        
+        /* 下Cボタンと上Cボタン */
+        button.action-btn { 
+            background-color: #7f7f7f; 
+            min-width: 50px; 
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+        button.action-btn:hover {
+             background-color: #212121; }
+        
+        /* 「隣のCへ」ボタン専用の色設定 */
+        button.next-c-btn {
+            background-color: #2563eb; 
+        }
+        button.next-c-btn:hover {
+            background-color: #1d4ed8; 
+        }
+
+        /* 「－OH」ボタン専用の色設定 */
+        button.oh-btn {
+            background-color: #f6645c; 
+        }
+        button.oh-btn:hover {
+            background-color: #ed3a3a; 
+        }
+        
+        /* 「＝O」ボタン専用の色設定 */
+        button.o-double-btn {
+            background-color: #f6645c; 
+        }
+        button.o-double-btn:hover {
+            background-color: #ed3a3a;
+        }
+
+        /* 提出ボタンのカスタムスタイル */
+        button.submit-btn { 
+            background-color: #10b981; 
+            font-size: 1.1rem; 
+            min-width: 90px; 
+        }
+        button.submit-btn:hover { background-color: #059669; }
+
+        /* 主鎖の「－O」ボタン専用の色設定 */
+        button.main-o-btn {
+            background-color: #f6645c; 
+        }
+        button.main-o-btn:hover {
+            background-color: #ed3a3a; 
+        }
+
+        button.undo-btn { background-color: #eeb087; }
+        button.undo-btn:hover { background-color: #736124a7; }
+        
+        button.next-quiz-btn { background-color: #2563eb; padding: 12px 30px; font-size: 1.1rem; width: 100%; }
+        button.next-quiz-btn:hover { background-color: #1d4ed8; }
+
+        /* 縦型の結合＋Cボタンの構造 */
+        .c-icon-btn {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1;
+        }
+        .c-icon-btn span { font-size: 0.7rem; transform: rotate(90deg); }
+        .c-icon-btn .bond-up { margin-bottom: -2px; }
+        .c-icon-btn .bond-down { margin-top: -2px; }
+
+        /* 「－OH」ボタン用のスタイル */
+        .oh-icon-btn {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1;
+        }
+        .oh-icon-btn span { font-size: 0.7rem; transform: rotate(90deg); margin-bottom: -2px; }
+        .oh-text-row {
+            display: flex;
+            flex-direction: row; 
+            font-size: 1rem;   
+            font-weight: bold;
+            line-height: 1;
+        }
+        /* スクリーンショットエリア */
+        .screenshot-section {
+            margin-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 15px;
+            text-align: left;
+            width: 100%;
+        }
+        .screenshot-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .screenshot-container img {
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            background-color: #fff;
+            max-height: 70px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        @media (max-width: 380px) {
+            #canvas { transform: scale(0.72); }
+            button { padding: 8px 6px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="startScreen" class="hidden" style="padding: 20px 10px;">
+        <h1 style="font-size: 1.8rem; color: #2563eb; margin-bottom: 20px; line-height: 1.3;">異性体学習アプリ<br><span style="font-size: 1.1rem; color: #64748b;">〜構造式パズル〜</span></h1>
+        <p style="font-size: 0.95rem; color: #475569; text-align: left; background-color: #f8fafc; padding: 15px; border-radius: 8px; line-height: 1.6; margin-bottom: 25px;">
+            <strong>【遊び方】</strong><br>
+            ・表示された分子式の構造異性体を組み立てて<br>
+            　「提出」を押す。<br>
+            ・正解すると下にスクショが保存されます。<br>
+            ・その問題の異性体を【すべて】見つければクリアです！
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 12px; max-width: 250px; margin: 0 auto;">
+            <button id="startNewBtn" style="background-color: #10b981; font-size: 1.1rem; padding: 12px;">最初からスタート</button>
+            <button id="startResumeBtn" class="hidden" style="background-color: #2563eb; font-size: 1.1rem; padding: 12px;">続きからスタート</button>
+        </div>
+    </div>
+
+    <div id="gameClearScreen" class="hidden" style="padding: 30px 10px;">
+        <div style="font-size: 4rem; margin-bottom: 10px;">🎉</div>
+        <h1 style="font-size: 1.8rem; color: #10b981; margin-bottom: 15px;">全問クリア！！</h1>
+        <p style="font-size: 1.05rem; color: #334155; font-weight: bold; margin-bottom: 30px; line-height: 1.6;">
+            おめでとうございます！<br>すべての異性体を完全にマスターしました！
+        </p>
+        <button id="restartGameBtn" style="background-color: #e144ef; font-size: 1.1rem; padding: 12px 25px;">もう一度最初から解く</button>
+    </div>
+
+    <div id="quizPlayArea">
+        <div class="formula-section" style="display: flex; justify-content: space-between; align-items: center;">
+            <span id="problemText"></span>
+            <span id="quizProgress" style="font-size: 0.85rem; background-color: #0284c7; color: white; padding: 2px 8px; border-radius: 20px; white-space: nowrap; margin-left: 10px;"></span>
+        </div>
+
+        <div class="canvas-section" id="canvasContainer">
+            <div id="canvas"></div>
+            <div id="feedbackOverlay" class="feedback-overlay hidden"></div>
+        </div>
+
+        <div id="tutorialMessage" style="background-color: #fffbeb; border: 1px solid #fef3c7; color: #b45309; padding: 10px; border-radius: 5px; margin-bottom: 12px; font-weight: bold; font-size: 0.95rem;"></div>
+
+        <div class="button-section flex-nowrap" id="mainMenu">
+            <button id="addCBtn">－C</button>
+            <button id="addOBtn" class="main-o-btn">－O</button> <button id="mainOHBtn" class="oh-btn">－OH</button>
+            <button id="openSideBtn" class="add-side-btn">側鎖へ</button>
+        </div>
+
+        <div class="sub-button-section hidden" id="sideMenu">
+            <button id="upCBtn" class="action-btn">
+                <div class="c-icon-btn">
+                    <span class="bond-up" style="transform: rotate(90deg); margin-bottom: -0px; margin-top: -3px;">－</span>
+                    <div>C</div>
+                </div>
+            </button>
+            <button id="downCBtn" class="action-btn">
+                <div class="c-icon-btn">C<span class="bond-down">－</span></div>
+            </button>
+            
+            <button id="addOHBtn" class="action-btn oh-btn">
+                <div class="oh-text-row">
+                    <div class="oh-icon-btn">
+                        <span class="bond-up">－</span>
+                        <div>O</div>
+                    </div>
+                    <div style="align-self: flex-end; line-height: 1.1;">H</div>
+                </div>
+            </button>
+            
+            <button id="addDoubleOBtn" class="action-btn o-double-btn">
+                <div class="oh-icon-btn">
+                    <span class="bond-up" style="letter-spacing: -2px; transform: rotate(90deg); margin-bottom: -0px; margin-top: -4px;">＝</span>
+                    <div>O</div>
+                </div>
+            </button>
+
+            <button id="nextCBtn" class="action-btn next-c-btn">隣のCへ</button>
+        </div>
+
+        <div class="bottom-button-section" id="controlMenu">
+            <button id="submitBtn" class="submit-btn">提出</button>
+            <button id="undoBtn" class="undo-btn">Undo</button>
+            <button id="resetBtn" style="background-color: #e144ef;">RESET</button>
+            <button id="nextQuizBtn" class="next-quiz-btn hidden">次の問題へ</button>
+        </div>
+
+        <div class="screenshot-section">
+            <div class="screenshot-container" id="screenshotContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // === 効果音の設定 ===
+    function createAudio(url, volume) {
+        const audio = new Audio(url);
+        audio.volume = volume;
+        return audio;
+    }
+
+    const clickSound = createAudio("https://raw.githubusercontent.com/1-1chem/kouzousikigame/main/kurikku.mp3", 0.5);
+    const missSound = createAudio("https://raw.githubusercontent.com/1-1chem/kouzousikigame/main/hazure.wav", 0.6);
+    const tutorialMissSound = createAudio("https://raw.githubusercontent.com/1-1chem/kouzousikigame/main/tigauyo.mp3", 0.8);
+    const correctSound = createAudio("https://raw.githubusercontent.com/1-1chem/isomergame/main/seikai.mp3", 0.5);
+    const nextQSound = createAudio("https://raw.githubusercontent.com/1-1chem/isomergame/main/nextQue.mp3", 0.5);
+
+
+    function playAudio(audioObj) {
+        if (!audioObj) return;
+        audioObj.currentTime = 0;
+        audioObj.play().catch(e => console.log("音声再生エラー:", e));
+    }
+
+    // 共通スタイル定数
+    const styleNormalBtn = `display:inline-flex; padding:4px 10px; font-size:0.9rem; pointer-events:none; background-color:#e5e7eb !important; color:#000000 !important; border:1px solid #9ca3af; font-weight:bold; margin:0 4px; box-shadow:0 1px 2px rgba(0,0,0,0.05);`;
+    const styleBlueBtn   = `display:inline-flex; padding:4px 10px; font-size:0.9rem; pointer-events:none; background-color:#2563eb !important; color:white !important; font-weight:bold; margin:0 4px; border:none; box-shadow:0 1px 2px rgba(0,0,0,0.05);`;
+    const styleRedBtn    = `display:inline-flex; padding:4px 10px; font-size:0.9rem; pointer-events:none; background-color:#f6645c !important; color:white !important; font-weight:bold; margin:0 4px; border:none; box-shadow:0 1px 2px rgba(0,0,0,0.05);`;
+    const styleGreenBtn  = `display:inline-flex; padding:4px 10px; font-size:0.9rem; pointer-events:none; background-color:#10b981 !important; color:white !important; font-weight:bold; margin:0 4px; border:none; box-shadow:0 1px 2px rgba(0,0,0,0.05);`;
+
+        const quizList = [
+        {question: "2,2-ジメチルプロパンの構造式", 
+            totalIsomers: 1, 
+            answers: [["CC(C)(C)C"]],
+            tutorialSteps: [
+            `主鎖を書くので <button style="background-color:#7f7f7f; padding:3px 8px; font-size:0.85rem;">－C</button> を押す（1回目）`,
+            `主鎖を書くので <button style="background-color:#7f7f7f; padding:3px 8px; font-size:0.85rem;">－C</button> を押す（2回目）`,
+            `側鎖を書くので <span class="action-btn" style="${styleBlueBtn}">側鎖へ</span> を押す`,
+            `2番目の炭素に移動するために <span class="action-btn" style="${styleBlueBtn}">隣のCへ</span> を押す`,
+            `下に炭素を結合するので <button style="background-color:#9d9d9d; padding:3px 8px; font-size:0.85rem; color:white; display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1;"><span style="transform:rotate(90deg); margin-bottom:-4px; margin-top:-2px; font-size:0.6rem;">－</span><div style="font-size:0.85rem; font-weight:bold;">C</div></button> を押す`,
+            `上に炭素を結合するので <button style="background-color:#9d9d9d; padding:3px 8px; font-size:0.85rem; color:white; display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1;"><div style="font-size:0.85rem; font-weight:bold;">C</div><span style="transform:rotate(90deg); margin-top:-4px; margin-bottom:-2px; font-size:0.6rem;">－</span></button> を押す`,
+            `これで完成です！ <span class="action-btn" style="${styleGreenBtn}">提出</span> を押す`
+        ]},
+        {question: "分子式C<sub>4</sub>H<sub>10</sub>の異性体", totalIsomers: 2, answers: [ ["CCCC"],["CC(C)C","CC(C)C"] ]},
+        {question: "分子式C<sub>5</sub>H<sub>12</sub>の異性体", totalIsomers: 3, answers: [ ["CCCCC"],["CC(C)CC","CCC(C)C"],["CC(C)(C)C"] ]},
+        {question: "分子式C<sub>6</sub>H<sub>14</sub>の異性体", totalIsomers: 5, answers: [ ["CCCCCC"],["CC(C)CCC","CCCC(C)C"],["CCC(C)CC"],["CC(C)(C)CC","CCC(C)(C)C"],["CC(C)C(C)C"] ]},
+        {question: "分子式C<sub>7</sub>H<sub>16</sub>で主鎖の炭素数7か6の構造式", totalIsomers: 3, answers: [ ["CCCCCCC"],["CC(C)CCCC","CCCCC(C)C"],["CCC(C)CCC","CCCC(C)CC"] ]},
+        {question: "分子式C<sub>7</sub>H<sub>16</sub>で主鎖の炭素数5か4の構造式", totalIsomers: 6, answers: [ ["CC(C)(C)CCC","CCCC(C)(C)C"],["CC(C)C(C)CC","CCC(C)C(C)C"],["CC(C)CC(C)C","CC(C)CC(C)C"],["CCC(C)(C)CC"],["CCC(CC)CC"],["CC(C)(C)C(C)C","CC(C)C(C)(C)C"] ]},
+        {question: "分子式C<sub>8</sub>H<sub>18</sub>で主鎖の炭素数8か7の異性体", totalIsomers: 3, answers: [ ["CCCCCCCC" ],["CC(C)CCCCC","CCCCCC(C)C"],["CCC(C)CCCC","CCCCC(C)CC"],["CCC(C)CCCC"] ]},
+        {question: "分子式C<sub>8</sub>H<sub>18</sub>で主鎖の炭素数6の異性体", totalIsomers: 7, answers: [ ["CC(C)(C)CCCC","CCCCC(C)(C)C"],["CC(C)C(C)CCC","CCCC(C)C(C)C"],["CC(C)CC(C)CC","CCC(C)CC(C)C"],["CC(C)CCC(C)C","CC(C)CCC(C)C"],["CCC(C)(C)CCC","CCCC(C)(C)CC"],["CCC(CC)CCC","CCCC(CC)CC"],["CCC(C)C(C)CC","CCC(C)C(C)CC"] ]},
+        {question: "分子式C<sub>8</sub>H<sub>18</sub>で主鎖の炭素数5の異性体", totalIsomers: 6,answers: [ ["CC(C)(C)C(C)CC","CCC(C)C(C)(C)C"],["CC(C)(C)CC(C)C","CC(C)CC(C)(C)C"],["CC(C)C(C)C(C)C"],["CCC(C)(CC)CC"],["CC(C)C(CC)CC","CCC(CC)C(C)C"],["CC(C)C(C)(C)CC","CCC(C)(C)C(C)C"]]},
+        {question: "分子式C<sub>8</sub>H<sub>18</sub>で主鎖の炭素数4の異性体", totalIsomers: 1, answers: [ ["CC(C)(C)C(C)(C)C"] ]},
+        {question: "分子式C<sub>3</sub>H<sub>8</sub>Oの異性体", totalIsomers: 3,answers: [["CCC(OH)","C(OH)CC", "CCCOH"],["CC(OH)C"],["COCC)","CCOC"]]},
+        {question: "分子式C<sub>4</sub>H<sub>10</sub>Oのアルコールの異性体", totalIsomers: 4,answers: [["C(OH)CCC","CCCC(OH)","CCCCOH"],["CC(OH)CC","CCC(OH)C"],["CC(C)(OH)C"],["C(OH)C(C)C","CC(C)C(OH)","CC(C)COH"]]},
+        {question: "分子式C<sub>4</sub>H<sub>10</sub>Oのエーテルの異性体", totalIsomers: 3,answers: [["COCCC","CCCOC"],["CCOCC"],["CC(C)OC"],["COC(C)C"]]},
+        {question: "分子式C<sub>5</sub>H<sub>12</sub>Oのアルコールの異性体", totalIsomers: 8,answers: [["C(OH)CCCC","CCCCC(OH)","CCCCCOH"],["CC(OH)CCC","CCCC(OH)C"],["CCC(OH)CC"],["C(OH)CC(C)C","CC(C)CC(OH)","CC(C)CCOH"],["CC(OH)C(C)C","CC(C)C(OH)C"],["CCC(C)(OH)C","CC(C)(OH)CC"], ["CCC(C)C(OH)","C(OH)C(C)CC","CCC(C)COH"],["C(OH)C(C)(C)C","CC(C)(COH)C","CC(C)(C)C(OH)","CC(C)(C)COH"]]},
+        {question: "分子式C<sub>5</sub>H<sub>12</sub>Oのエーテルの異性体", totalIsomers: 6,answers: [["COCCCC","CCCCOC"],["CCOCCC","CCCOCC"],["COC(C)CC","CCC(C)OC"],["COCC(C)C","CC(C)COC"],["COC(C)(C)C","CC(C)(C)OC"],["CCOC(C)C","CC(C)OCC"]]},
+        {question: "酢酸の構造式", 
+            totalIsomers: 1,
+            answers: [["CC(=O)OH"]],
+            tutorialSteps: [
+            `主鎖を書くので <button style="background-color:#7f7f7f; padding:3px 8px; font-size:0.85rem;">－C</button> を押す`,
+            `カルボキシ基は先に <span class="action-btn" style="${styleRedBtn}">－OH</span> を押す`,
+            `「＝O」は側鎖に書くので <span class="action-btn" style="${styleBlueBtn}">側鎖へ</span> を押す`,
+            `2番に移動するために <span class="action-btn" style="${styleBlueBtn}">隣のCへ</span> を押す`,
+            `「＝O」を結合するので <button style="background-color:#f6645c; padding:3px 8px; font-size:0.85rem; color:white; display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1;"><span style="transform:rotate(90deg); margin-bottom:-4px; margin-top:2px; font-size:0.6rem;">＝</span><div style="font-size:0.85rem; font-weight:bold;">O</div></button> を押す`,                `これで完成です！ <span class="action-btn" style="${styleGreenBtn}">提出</span> を押す`
+        ]},
+        {question: "分子式C<sub>2</sub>H<sub>4</sub>O<sub>2</sub>の異性体", totalIsomers: 2,answers: [["CC(=O)OH"],["C(=O)OC","COC(=O)"]]},
+        {question: "分子式C<sub>3</sub>H<sub>6</sub>Oの異性体", totalIsomers: 2,answers: [["CCC(=O)","C(=O)CC"],["CC(=O)C"]]},
+        {question: "分子式C<sub>4</sub>H<sub>8</sub>Oのアルデヒドとケトンの異性体", totalIsomers: 3,answers: [["CCCC(=O)","C(=O)CCC"],["CC(=O)CC","CCC(=O)C"],["CC(C)C(=O)"],["C(=O)C(C)C"]]},
+        {question: "分子式C<sub>3</sub>H<sub>6</sub>O<sub>2</sub>のカルボン酸とエステルの異性体", totalIsomers: 3,answers: [["CCC(=O)OH"],["CC(=O)OC","COC(=O)C"],["C(=O)OCC","CCOC(=O)"]]},
+        {question: "分子式C<sub>4</sub>H<sub>8</sub>O<sub>2</sub>のカルボン酸とエステルの異性体", totalIsomers: 6,answers: [["CCCC(=O)OH"],["CC(C)C(=O)OH"],["CCC(=O)OC","COC(=O)CC"],["CC(=O)OCC","CCOC(=O)C"],["C(=O)OCCC","CCCOC(=O)"],["C(=O)OC(C)C","CC(C)OC(=O)"]]},
+    ];
+
+    let tutorialStep = 0; 
+    let currentQuizIndex = 0; 
+    let foundIsomers = [];    
+
+    const canvas = document.getElementById('canvas');
+    const mainMenu = document.getElementById('mainMenu');
+    const sideMenu = document.getElementById('sideMenu');
+    const controlMenu = document.getElementById('controlMenu');
+    
+    const addCBtn = document.getElementById('addCBtn');
+    const addOBtn = document.getElementById('addOBtn');
+    const openSideBtn = document.getElementById('openSideBtn');
+    const upCBtn = document.getElementById('upCBtn');
+    const downCBtn = document.getElementById('downCBtn');
+    const addOHBtn = document.getElementById('addOHBtn');
+    const nextCBtn = document.getElementById('nextCBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const mainOHBtn = document.getElementById('mainOHBtn');
+    const addDoubleOBtn = document.getElementById('addDoubleOBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const nextQuizBtn = document.getElementById('nextQuizBtn');
+    const screenshotContainer = document.getElementById('screenshotContainer');
+    const feedbackOverlay = document.getElementById('feedbackOverlay');
+
+    const startScreen = document.getElementById('startScreen');
+    const gameClearScreen = document.getElementById('gameClearScreen');
+    const quizPlayArea = document.getElementById('quizPlayArea');
+    const startNewBtn = document.getElementById('startNewBtn');
+    const startResumeBtn = document.getElementById('startResumeBtn');
+    const restartGameBtn = document.getElementById('restartGameBtn');
+    const quizProgress = document.getElementById('quizProgress');
+
+    let atoms = [];       
+    let cCount = 1;       
+    let selectedCId = null; 
+    let stateHistory = [];
+
+    const START_X = 75;
+    const START_Y = 90; 
+    const STEP_X = 55;  
+    const STEP_Y = 55;  
+
+    function hideAllScreens() {
+        if(startScreen) startScreen.classList.add('hidden');
+        if(gameClearScreen) gameClearScreen.classList.add('hidden');
+        if(quizPlayArea) quizPlayArea.classList.add('hidden');
+    }
+
+    function saveCurrentProgress() {
+        const dataToSave = {
+            quizIndex: currentQuizIndex,
+            tutorialStep: tutorialStep,
+            foundIsomers: foundIsomers,
+            atoms: atoms,
+            cCount: cCount,
+            selectedCId: selectedCId,
+            screenshotsHTML: screenshotContainer.innerHTML
+        };
+        localStorage.setItem('isomerApp_full_progress', JSON.stringify(dataToSave));
+    }
+
+    function loadSavedProgress() {
+        const rawData = localStorage.getItem('isomerApp_full_progress');
+        if (!rawData) return false;
+
+        try {
+            const saved = JSON.parse(rawData);
+            currentQuizIndex = saved.quizIndex;
+            tutorialStep = saved.tutorialStep;
+            foundIsomers = saved.foundIsomers || [];
+            atoms = saved.atoms;
+            cCount = saved.cCount;
+            selectedCId = saved.selectedCId;
+            
+            hideAllScreens();
+            if(quizPlayArea) quizPlayArea.classList.remove('hidden');
+
+            document.getElementById('problemText').innerHTML = quizList[currentQuizIndex].question;
+            if (quizProgress) quizProgress.textContent = `${currentQuizIndex + 1} / ${quizList.length}問目`;
+            screenshotContainer.innerHTML = saved.screenshotsHTML || '';
+            
+            if (selectedCId !== null) {
+                mainMenu.classList.add('hidden');
+                sideMenu.classList.remove('hidden');
+                openSideBtn.classList.add('hidden');
+            } else {
+                sideMenu.classList.add('hidden');
+                mainMenu.classList.remove('hidden');
+                openSideBtn.classList.remove('hidden');
+            }
+
+            const activeQuiz = quizList[currentQuizIndex];
+            if (foundIsomers.length === activeQuiz.totalIsomers) {
+                mainMenu.classList.add('hidden');
+                sideMenu.classList.add('hidden');
+                submitBtn.classList.add('hidden');
+                openSideBtn.classList.add('hidden');
+                resetBtn.classList.add('hidden');
+                controlMenu.classList.remove('hidden');
+                nextQuizBtn.classList.remove('hidden');
+                showFeedback("全て書きました", "text-complete", 0);
+                canvas.innerHTML = '';
+            } else {
+                render();
+                updateTutorialMessage();
+            }
+            return true;
+        } catch (e) {
+            console.error("セーブデータの読み込み失敗:", e);
+            return false;
+        }
+    }
+
+    function updateTutorialMessage() {
+        const msgEl = document.getElementById('tutorialMessage');
+        const activeQuiz = quizList[currentQuizIndex];
+        
+        if (activeQuiz && activeQuiz.tutorialSteps) {
+            msgEl.classList.remove('hidden');
+            msgEl.innerHTML = `【ナビ】` + activeQuiz.tutorialSteps[tutorialStep];
+        } else {
+            msgEl.classList.add('hidden');
+        }
+    }
+
+    function showTutorialWarning() {
+        playAudio(tutorialMissSound); // ★ミス音を再生
+        alert("手順が違います！メッセージに書かれたボタンを押してください。");
+    }
+
+    // ★チュートリアル中に「指示外のすべての行動」をキャッチして弾く完全版ロジック
+    function checkTutorialStep(buttonType) {
+        const activeQuiz = quizList[currentQuizIndex];
+        if (!activeQuiz || !activeQuiz.tutorialSteps) return true;
+
+        let isCorrect = false;
+        const qName = activeQuiz.question;
+
+        if (qName.includes("ジメチルプロパン")) {
+            if (tutorialStep === 0 && buttonType === 'addC') isCorrect = true;
+            else if (tutorialStep === 1 && buttonType === 'addC') isCorrect = true;
+            else if (tutorialStep === 2 && buttonType === 'openSide') isCorrect = true;
+            else if (tutorialStep === 3 && buttonType === 'nextC') isCorrect = true;
+            else if (tutorialStep === 4 && buttonType === 'upC') isCorrect = true;
+            else if (tutorialStep === 5 && buttonType === 'downC') isCorrect = true;
+            else if (tutorialStep === 6 && buttonType === 'submit') isCorrect = true;
+        } else if (qName.includes("酢酸")) {
+            if (tutorialStep === 0 && buttonType === 'addC') isCorrect = true;
+            else if (tutorialStep === 1 && buttonType === 'mainOH') isCorrect = true;
+            else if (tutorialStep === 2 && buttonType === 'openSide') isCorrect = true;
+            else if (tutorialStep === 3 && buttonType === 'nextC') isCorrect = true;
+            else if (tutorialStep === 4 && buttonType === 'sideDoubleO') isCorrect = true;
+            else if (tutorialStep === 5 && buttonType === 'submit') isCorrect = true;
+        }
+
+        if (isCorrect) {
+            if (buttonType !== 'submit') {
+                tutorialStep++;
+                updateTutorialMessage();
+            }
+            return true;
+        } else {
+            showTutorialWarning();
+            return false;
+        }
+    }
+
+    function loadQuiz(index) {
+        if (index >= quizList.length) {
+            hideAllScreens();
+            if(gameClearScreen) gameClearScreen.classList.remove('hidden');
+            localStorage.removeItem('isomerApp_full_progress'); 
+            return;
+        }
+
+        hideAllScreens();
+        if(quizPlayArea) quizPlayArea.classList.remove('hidden');
+
+        currentQuizIndex = index;
+        foundIsomers = [];
+        screenshotContainer.innerHTML = ''; 
+        nextQuizBtn.classList.add('hidden'); 
+        submitBtn.classList.remove('hidden'); 
+        openSideBtn.classList.remove('hidden');
+        resetBtn.classList.remove('hidden');
+        
+        document.getElementById('problemText').innerHTML = quizList[currentQuizIndex].question;
+        if (quizProgress) {
+            quizProgress.textContent = `${currentQuizIndex + 1} / ${quizList.length}問目`;
+        }
+        
+        resetToMain();
+        
+        if (quizList[index] && quizList[index].tutorialSteps) {
+            tutorialStep = 0;
+        }
+        updateTutorialMessage();
+        saveCurrentProgress();
+    }
+
+    function saveState() {
+        stateHistory.push({
+            atoms: JSON.parse(JSON.stringify(atoms)), 
+            cCount: cCount,
+            selectedCId: selectedCId
+        });
+    }
+
+    function init() {
+        canvas.innerHTML = '';
+        atoms = [];
+        cCount = 1;
+        selectedCId = null;
+        stateHistory = []; 
+
+        const firstC = { id: 1, type: 'C', cNumber: 1, x: START_X, y: START_Y };
+        atoms.push(firstC);
+        render();
+    }
+
+    function resetToMain() {
+        init();
+        
+        const menus = [mainMenu, sideMenu, controlMenu];
+        menus.forEach(menu => {
+            if(menu) {
+                menu.style.pointerEvents = '';
+                menu.style.opacity = '';
+            }
+        });
+
+        sideMenu.classList.add('hidden');             
+        mainMenu.classList.remove('hidden');           
+        openSideBtn.classList.remove('hidden');       
+        undoBtn.classList.remove('hidden');           
+        saveCurrentProgress(); 
+    }
+    
+    function render() {
+        canvas.innerHTML = '';
+
+        atoms.forEach(atom => {
+            const atomEl = document.createElement('div');
+            atomEl.className = 'carbon-node';
+            atomEl.style.left = atom.x + 'px';
+            atomEl.style.top = atom.y + 'px';
+
+            if (atom.type === '=O') {
+                atomEl.textContent = 'O';
+            } else {
+                atomEl.textContent = atom.type;
+            }
+
+            if (atom.type === 'C' && atom.cNumber) {
+                const badge = document.createElement('span');
+                badge.className = 'number-badge';
+                badge.textContent = atom.cNumber;
+                atomEl.appendChild(badge);
+            }
+
+            if (atom.id === selectedCId) {
+                atomEl.className += ' selected';
+            }
+
+            canvas.appendChild(atomEl);
+
+            if (atom.hasRightBond) {
+                const bond = document.createElement('div');
+                bond.className = 'bond-h';
+                bond.style.left = (atom.x + 20) + 'px';
+                bond.style.top = atom.y + 'px';
+                bond.textContent = 'ー';
+                canvas.appendChild(bond);
+            }
+            if (atom.hasBottomBond) {
+                const bond = document.createElement('div');
+                bond.className = 'bond-v';
+                bond.style.left = (atom.x - 11)+ 'px';
+                bond.style.top = (atom.y + 37) + 'px';
+                bond.textContent = 'ー'; 
+                canvas.appendChild(bond);
+            }
+            if (atom.hasTopBond) { 
+                const bond = document.createElement('div');
+                bond.className = 'bond-v';
+                bond.style.left = (atom.x - 11) + 'px';
+                bond.style.top = (atom.y - 18) + 'px';
+                bond.textContent = 'ー'; 
+                canvas.appendChild(bond);
+            }
+            if (atom.hasBottomDoubleBond) {
+                const bond = document.createElement('div');
+                bond.className = 'bond-v';
+                bond.style.left = (atom.x - 11) + 'px';
+                bond.style.top = (atom.y + 37) + 'px';
+                bond.style.letterSpacing = '-2px'; 
+                bond.style.fontWeight = 'bold';
+                bond.textContent = '＝'; 
+                canvas.appendChild(bond);
+            }
+
+            if (atom.type === 'C' && atom.hasBottomDoubleBond) {
+                const hasLeftAtom = atoms.some(a => a.x === atom.x - STEP_X && a.y === atom.y);
+                const hasRightAtom = atoms.some(a => a.x === atom.x + STEP_X && a.y === atom.y);
+
+                if (!hasLeftAtom) {
+                    const hLeft = document.createElement('div');
+                    hLeft.style.position = 'absolute';
+                    hLeft.style.left = (atom.x - 65) + 'px'; 
+                    hLeft.style.top = (atom.y - 7) + 'px';   
+                    hLeft.style.fontSize = '2rem';
+                    hLeft.style.fontWeight = 'bold';
+                    hLeft.textContent = 'H－';
+                    canvas.appendChild(hLeft);
+                }
+                
+                if (!hasRightAtom) {
+                    const hRight = document.createElement('div');
+                    hRight.style.position = 'absolute';
+                    hRight.style.left = (atom.x + 13) + 'px'; 
+                    hRight.style.top = (atom.y - 7) + 'px';   
+                    hRight.style.fontSize = '2rem';
+                    hRight.style.fontWeight = 'bold';
+                    hRight.textContent = '－H';
+                    canvas.appendChild(hRight);
+                }
+            }
+        });
+    }
+
+    function generateSmiles() {
+        const mainChain = atoms.filter(a => a.y === START_Y).sort((a, b) => a.x - b.x);
+        let smiles = "";
+        mainChain.forEach(atom => {
+            smiles += atom.type;
+            if (atom.type === 'C') {
+                let branches = [];
+                let upBranchSmiles = getBranchSmiles(atom.x, atom.y - STEP_Y, -STEP_Y);
+                if (upBranchSmiles) branches.push(upBranchSmiles);
+                let downBranchSmiles = getBranchSmiles(atom.x, atom.y + STEP_Y, STEP_Y);
+                if (downBranchSmiles) branches.push(downBranchSmiles);
+                branches.forEach(bStr => { smiles += `(${bStr})`; });
+            }
+        });
+        return smiles;
+    }
+
+    function getBranchSmiles(x, y, stepY) {
+        let current = atoms.find(a => a.x === x && a.y === y);
+        if (!current) return "";
+        let nextStr = getBranchSmiles(x, y + stepY, stepY);
+        return current.type + nextStr;
+    }
+
+    function getMainChainTail() {
+        return atoms.filter(a => a.y === START_Y).reduce((max, a) => (a.x > max.x ? a : max), atoms[0]);
+    }
+
+    function showFeedback(text, className, delayMs, callback) {
+        feedbackOverlay.textContent = text;
+        feedbackOverlay.className = `feedback-overlay ${className}`;
+        undoBtn.classList.add('hidden');
+        
+        if (delayMs > 0) {
+            setTimeout(() => {
+                feedbackOverlay.classList.add('hidden');
+                if (callback) callback();
+                else resetToMain();
+            }, delayMs);
+        }
+    }
+
+    // ==========================================
+    // 各種操作ボタンのイベント
+    // ==========================================
+    addCBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        if (!checkTutorialStep('addC')) return; 
+        saveState();
+        const tail = getMainChainTail();
+        cCount++;
+        tail.hasRightBond = true;
+        atoms.push({ id: Date.now(), type: 'C', cNumber: cCount, x: tail.x + STEP_X, y: START_Y });
+        render();
+        saveCurrentProgress();
+    });
+
+    // ★－Oボタン（チュートリアルチェック 'addO' を追加して誤操作を完全ブロック）
+    addOBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        if (!checkTutorialStep('addO')) return; 
+        saveState();
+        const tail = getMainChainTail();
+        tail.hasRightBond = true;
+        atoms.push({ id: Date.now(), type: 'O', cNumber: null, x: tail.x + STEP_X, y: START_Y });
+        render();
+        saveCurrentProgress();
+    });
+
+    mainOHBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        if (!checkTutorialStep('mainOH')) return; 
+        saveState();
+        const tail = getMainChainTail();
+        tail.hasRightBond = true; 
+        atoms.push({ id: Date.now(), type: 'OH', cNumber: null, x: tail.x + STEP_X, y: START_Y });
+        render();
+        saveCurrentProgress();
+    });
+
+    openSideBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        if (!checkTutorialStep('openSide')) return; 
+        if (sideMenu.classList.contains('hidden')) {
+            mainMenu.classList.add('hidden'); 
+            sideMenu.classList.remove('hidden'); 
+            openSideBtn.classList.add('hidden'); 
+            saveState();
+            const c1 = atoms.find(a => a.cNumber === 1);
+            if (c1) { selectedCId = c1.id; }
+            render();
+            saveCurrentProgress();
+        }
+    });
+    
+    upCBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        if (!checkTutorialStep('upC')) return; 
+        saveState();
+        const currentAtom = atoms.find(a => a.id === selectedCId);
+        let lastInColumn = currentAtom;
+        while (true) {
+            let nextDown = atoms.find(a => a.x === lastInColumn.x && a.y === lastInColumn.y + STEP_Y);
+            if (nextDown) { lastInColumn = nextDown; } else { break; }
+        }
+        lastInColumn.hasBottomBond = true;
+        cCount++;
+        const newSideC = { id: Date.now(), type: 'C', cNumber: cCount, x: lastInColumn.x, y: lastInColumn.y + STEP_Y };
+        atoms.push(newSideC);
+        selectedCId = newSideC.id; 
+        render();
+        saveCurrentProgress();
+    });
+
+    downCBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        if (!checkTutorialStep('downC')) return; 
+        saveState();
+        const currentAtom = atoms.find(a => a.id === selectedCId);
+        let lastInColumn = currentAtom;
+        while (true) {
+            let nextUp = atoms.find(a => a.x === lastInColumn.x && a.y === lastInColumn.y - STEP_Y);
+            if (nextUp) { lastInColumn = nextUp; } else { break; }
+        }
+        lastInColumn.hasTopBond = true;
+        cCount++;
+        const newSideC = { id: Date.now(), type: 'C', cNumber: cCount, x: lastInColumn.x, y: lastInColumn.y - STEP_Y };
+        atoms.push(newSideC);
+        selectedCId = newSideC.id; 
+        render();
+        saveCurrentProgress();
+    });
+
+    addOHBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        if (!checkTutorialStep('sideOH')) return; // 側鎖OHもチェック
+        saveState();
+        const currentAtom = atoms.find(a => a.id === selectedCId);
+        let lastInColumn = currentAtom;
+        while (true) {
+            let nextDown = atoms.find(a => a.x === lastInColumn.x && a.y === lastInColumn.y + STEP_Y);
+            if (nextDown) { lastInColumn = nextDown; } else { break; }
+        }
+        lastInColumn.hasBottomBond = true; 
+        const newSideOH = { id: Date.now(), type: 'OH', cNumber: null, x: lastInColumn.x, y: lastInColumn.y + STEP_Y };
+        atoms.push(newSideOH);
+        selectedCId = newSideOH.id; 
+        render();
+        saveCurrentProgress();
+    });
+
+    addDoubleOBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        if (!checkTutorialStep('sideDoubleO')) return; 
+        saveState();
+        const currentAtom = atoms.find(a => a.id === selectedCId);
+        let lastInColumn = currentAtom;
+        while (true) {
+            let nextDown = atoms.find(a => a.x === lastInColumn.x && a.y === lastInColumn.y + STEP_Y);
+            if (nextDown) { lastInColumn = nextDown; } else { break; }
+        }
+        lastInColumn.hasBottomDoubleBond = true; 
+        const newDoubleO = { id: Date.now(), type: '=O', cNumber: null, x: lastInColumn.x, y: lastInColumn.y + STEP_Y };
+        atoms.push(newDoubleO);
+        selectedCId = newDoubleO.id; 
+        render();
+        saveCurrentProgress();
+    });
+
+    nextCBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        if (!checkTutorialStep('nextC')) return; 
+        saveState();
+        const currentAtom = atoms.find(a => a.id === selectedCId);
+        const mainChainCarbons = atoms.filter(a => a.type === 'C' && a.y === START_Y).sort((a, b) => a.x - b.x);
+        const currentIndex = mainChainCarbons.findIndex(a => a.x === currentAtom.x);
+        if (currentIndex !== -1 && currentIndex + 1 < mainChainCarbons.length) {
+            selectedCId = mainChainCarbons[currentIndex + 1].id;
+        } else {
+            if (mainChainCarbons.length > 0) { selectedCId = mainChainCarbons[0].id; }
+        }
+        render();
+        saveCurrentProgress();
+    });
+
+    undoBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        if (!checkTutorialStep('undo')) return; // チュートリアル中Undoもブロック
+        if (stateHistory.length > 0) {
+            const prevState = stateHistory.pop();
+            atoms = prevState.atoms;
+            cCount = prevState.cCount;
+            selectedCId = prevState.selectedCId;
+            render();
+            saveCurrentProgress();
+        }
+    });
+
+    submitBtn.addEventListener('click', () => {
+        if (!checkTutorialStep('submit')) return; 
+
+        saveState();
+        const activeQuiz = quizList[currentQuizIndex];
+        const currentSmiles = generateSmiles();
+    
+        let matchedIndex = -1;
+        for (let i = 0; i < activeQuiz.answers.length; i++) {
+            if (activeQuiz.answers[i].includes(currentSmiles)) {
+                matchedIndex = i;
+                break;
+            }
+        }
+
+        function lockControls() {
+            const menus = [mainMenu, sideMenu, controlMenu];
+            menus.forEach(menu => {
+                if(menu) {
+                    menu.style.pointerEvents = 'none'; 
+                    menu.style.opacity = '0.4';        
+                }
+            });
+        }
+
+        if (matchedIndex !== -1) {
+            if (foundIsomers.includes(matchedIndex)) {
+                lockControls(); 
+                playAudio(missSound); // すでに書いた場合の不正解音
+                showFeedback("不正解\n(既に書きました)", "text-incorrect", 2000);
+            } else {
+                foundIsomers.push(matchedIndex);
+                playAudio(correctSound);
+                selectedCId = null;
+                render();
+                lockControls(); 
+
+                html2canvas(document.getElementById('canvasContainer')).then(canvasImage => {
+                    const imgUrl = canvasImage.toDataURL('image/png');
+                    const newImg = document.createElement('img');
+                    newImg.src = imgUrl;
+                    newImg.title = `SMILES: ${currentSmiles}`;
+                    screenshotContainer.appendChild(newImg);
+
+                    if (foundIsomers.length === activeQuiz.totalIsomers) {
+                        const menus = [mainMenu, sideMenu, controlMenu];
+                        menus.forEach(menu => {
+                            if(menu) {
+                                menu.style.pointerEvents = '';
+                                menu.style.opacity = '';
+                            }
+                        });
+
+                        mainMenu.classList.add('hidden');
+                        sideMenu.classList.add('hidden');
+                        submitBtn.classList.add('hidden');
+                        openSideBtn.classList.add('hidden');
+                        resetBtn.classList.add('hidden');
+                        controlMenu.classList.remove('hidden');
+                        nextQuizBtn.classList.remove('hidden');
+                        //playAudio(correctSound);
+                        showFeedback("全て書きました", "text-complete", 0); 
+                        canvas.innerHTML = '';
+                    } else {
+                        //playAudio(correctSound);
+                        showFeedback("正解", "text-complete", 2000); 
+                    }
+                    saveCurrentProgress(); 
+                });
+            }
+        } else {
+            lockControls(); 
+            playAudio(missSound); // 通常の不正解音
+            showFeedback("不正解", "text-incorrect", 2000);
+        }
+    });
+
+    nextQuizBtn.addEventListener('click', () => {
+        playAudio(nextQSound);
+        feedbackOverlay.classList.add('hidden'); 
+        loadQuiz(currentQuizIndex + 1);
+    });
+
+    // ==========================================
+    // RESETボタンの長押し判定
+    // ==========================================
+    let longPressTimer = null;
+    const LONG_PRESS_TIME = 1000; 
+
+    function startResetTimer(e) {
+        // ★ここを追加：チュートリアル中はミス判定にして長押しを始めさせない
+        if (!checkTutorialStep('reset')) return; 
+
+        if (e.type === 'touchstart') e.preventDefault(); 
+        if (longPressTimer) clearTimeout(longPressTimer);
+
+        longPressTimer = setTimeout(() => {
+            if (confirm("これまでのゲームの進み具合をリセットして、1問目に戻しますか？")) {
+                localStorage.removeItem('isomerApp_full_progress'); 
+                loadQuiz(0); 
+            }
+            longPressTimer = null; 
+        }, LONG_PRESS_TIME);
+    }
+
+    function cancelResetTimer() {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+            resetToMain();
+        }
+    }
+
+    resetBtn.addEventListener('mousedown', startResetTimer);
+    resetBtn.addEventListener('mouseup', cancelResetTimer);
+    resetBtn.addEventListener('mouseleave', cancelResetTimer);
+    resetBtn.addEventListener('touchstart', startResetTimer, { passive: false });
+    resetBtn.addEventListener('touchend', cancelResetTimer);
+    resetBtn.addEventListener('touchcancel', cancelResetTimer);
+
+    // ==========================================
+    // スタート画面・終了画面の遷移ボタン
+    // ==========================================
+    if (startNewBtn) {
+        startNewBtn.addEventListener('click', () => {
+            playAudio(clickSound);
+            localStorage.removeItem('isomerApp_full_progress');
+            loadQuiz(0);
+        });
+    }
+
+    if (startResumeBtn) {
+        startResumeBtn.addEventListener('click', () => {
+            playAudio(clickSound);
+            loadSavedProgress();
+        });
+    }
+
+    if (restartGameBtn) {
+        restartGameBtn.addEventListener('click', () => {
+            playAudio(clickSound);
+            loadQuiz(0);
+        });
+    }
+
+    // ==========================================
+    // アプリ初期起動処理
+    // ==========================================
+    hideAllScreens();
+    const rawData = localStorage.getItem('isomerApp_full_progress');
+    
+    if (rawData) {
+        if(startScreen) startScreen.classList.remove('hidden');
+        if(startResumeBtn) startResumeBtn.classList.remove('hidden');
+    } else {
+        if(startScreen) startScreen.classList.remove('hidden');
+        if(startResumeBtn) startResumeBtn.classList.add('hidden');
+    }
+</script>
+</body>
+</html>
