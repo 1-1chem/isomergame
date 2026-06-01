@@ -6,98 +6,21 @@
     <title>異性体学習アプリ</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f5f7fa;
-            padding: 10px;
-        }
-        .container {
-            background-color: white;
-            padding: 20px 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            text-align: center;
-            max-width: 500px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .formula-section {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #333;
-            background-color: #e0f2fe;
-            padding: 10px;
-            border-radius: 5px;
-        }
-
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f5f7fa; padding: 10px; }
+        .container { background-color: white; padding: 20px 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; max-width: 500px; width: 100%; box-sizing: border-box; }
+        .formula-section { font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; color: #333; background-color: #e0f2fe; padding: 10px; border-radius: 5px; }
         /* 構造式を描画する外枠 */
-        .canvas-section {
-            border: 2px dashed #cbd5e1;
-            border-radius: 8px;
-            height: 240px;
-            position: relative; 
-            background-color: #fafafa;
-            margin-bottom: 15px;
-            overflow: hidden;
-        }
-
+        .canvas-section {border: 2px dashed #cbd5e1;border-radius: 8px;height: 240px;position: relative; background-color: #fafafa;margin-bottom: 15px;overflow: hidden; }
         /* 構造式自体をスマホ用に縮小表示 */
-        #canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            transform: scale(0.8);
-            transform-origin: top left;
-        }
-
+        #canvas {position: absolute;top: 0;left: 0;width: 100%;height: 100%;transform: scale(0.8);transform-origin: top left;}
         /* 判定結果を表示するオーバーレイ */
-        .feedback-overlay {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3.5rem;
-            font-weight: bold;
-            z-index: 100;
-            background-color: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(2px);
-        }
+        .feedback-overlay {position: absolute;top: 0; left: 0;width: 100%; height: 100%;display: flex;align-items: center;justify-content: center;font-size: 3.5rem;font-weight: bold;z-index: 100;background-color: rgba(255, 255, 255, 0.85);backdrop-filter: blur(2px);}
         .text-incorrect { color: #ef4444; }
         .text-complete { color: #10b981; font-size: 2.5rem;}
-
         /* 炭素・酸素・ヒドロキシ基要素のスタイル */
-        .carbon-node {
-            position: absolute;
-            width: 60px; 
-            height: 40px;
-            line-height: 40px;
-            font-size: 2.2rem;
-            font-weight: bold;
-            text-align: left; 
-            padding-left: 5px;
-            z-index: 2;
-            margin-left: -15px;
-        }
-
+        .carbon-node {position: absolute;width: 60px; height: 40px;line-height: 40px;font-size: 2.2rem;font-weight: bold;text-align: left; padding-left: 5px;z-index: 2;margin-left: -15px;}
         /* 左上付き位置番号 */
-        .number-badge {
-            position: absolute;
-            left: 0px;       
-            top: -5px;       
-            font-size: 0.8rem;
-            color: #ef4444;   
-            font-weight: normal;
-            line-height: 1;
-        }
-
+        .number-badge {position: absolute;left: 0px; top: -5px; font-size: 0.8rem;color: #ef4444; font-weight: normal;line-height: 1;}
         /* 現在選択中の炭素を現す赤丸の点滅 */
         .carbon-node.selected::after {
             content: '';
@@ -190,122 +113,87 @@
         button.oh-btn {
             background-color: #f6645c; 
         }
-        button.oh-btn:hover {
-            background-color: #ed3a3a; 
-        }
-        
+        button.oh-btn:hover {background-color: #ed3a3a; }
         /* 「＝O」ボタン専用の色設定 */
-        button.o-double-btn {
-            background-color: #f6645c; 
-        }
-        button.o-double-btn:hover {
-            background-color: #ed3a3a;
-        }
-
+        button.o-double-btn {background-color: #f6645c; }
+        button.o-double-btn:hover {background-color: #ed3a3a;}
         /* 提出ボタンのカスタムスタイル */
-        button.submit-btn { 
-            background-color: #10b981; 
-            font-size: 1.1rem; 
-            min-width: 90px; 
-        }
+        button.submit-btn {background-color: #10b981;font-size: 1.1rem; min-width: 90px; }
         button.submit-btn:hover { background-color: #059669; }
-
         /* 主鎖の「－O」ボタン専用の色設定 */
-        button.main-o-btn {
-            background-color: #f6645c; 
-        }
-        button.main-o-btn:hover {
-            background-color: #ed3a3a; 
-        }
-
+        button.main-o-btn {background-color: #f6645c; }
+        button.main-o-btn:hover {background-color: #ed3a3a; }
         button.undo-btn { background-color: #eeb087; }
         button.undo-btn:hover { background-color: #736124a7; }
-        
         button.next-quiz-btn { background-color: #2563eb; padding: 12px 30px; font-size: 1.1rem; width: 100%; }
         button.next-quiz-btn:hover { background-color: #1d4ed8; }
-
         /* 縦型の結合＋Cボタンの構造 */
-        .c-icon-btn {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            line-height: 1;
-        }
+        .c-icon-btn {display: inline-flex;flex-direction: column;align-items: center;line-height: 1;}
         .c-icon-btn span { font-size: 0.7rem; transform: rotate(90deg); }
         .c-icon-btn .bond-up { margin-bottom: -2px; }
         .c-icon-btn .bond-down { margin-top: -2px; }
-
         /* 「－OH」ボタン用のスタイル */
-        .oh-icon-btn {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            line-height: 1;
-        }
+        .oh-icon-btn {display: inline-flex;flex-direction: column;align-items: center;line-height: 1;}
         .oh-icon-btn span { font-size: 0.7rem; transform: rotate(90deg); margin-bottom: -2px; }
-        .oh-text-row {
-            display: flex;
-            flex-direction: row; 
-            font-size: 1rem;   
-            font-weight: bold;
-            line-height: 1;
-        }
+        .oh-text-row {display: flex;flex-direction: row; font-size: 1rem; font-weight: bold;line-height: 1;}
         /* スクリーンショットエリア */
-        .screenshot-section {
-            margin-top: 20px;
-            border-top: 2px solid #e2e8f0;
-            padding-top: 15px;
-            text-align: left;
-            width: 100%;
-        }
-        .screenshot-container {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .screenshot-container img {
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            background-color: #fff;
-            max-height: 70px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        @media (max-width: 380px) {
-            #canvas { transform: scale(0.72); }
-            button { padding: 8px 6px; font-size: 0.85rem; }
-        }
+        .screenshot-section { margin-top: 20px;border-top: 2px solid #e2e8f0;padding-top: 15px;text-align: left;width: 100%;}
+        .screenshot-container {display: flex;gap: 10px;flex-wrap: wrap;justify-content: center;}
+        .screenshot-container img {border: 1px solid #cbd5e1;border-radius: 4px;background-color: #fff;max-height: 70px;box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+        @media (max-width: 380px) {#canvas { transform: scale(0.72); }button { padding: 8px 6px; font-size: 0.85rem; }}
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="startScreen" class="hidden" style="padding: 20px 10px;">
+    <div id="startScreen" style="padding: 20px 10px;">
         <h1 style="font-size: 1.8rem; color: #2563eb; margin-bottom: 20px; line-height: 1.3;">異性体学習アプリ<br><span style="font-size: 1.1rem; color: #64748b;">〜構造式パズル〜</span></h1>
-        <p style="font-size: 0.95rem; color: #475569; text-align: left; background-color: #f8fafc; padding: 15px; border-radius: 8px; line-height: 1.6; margin-bottom: 25px;">
-            <strong>【遊び方】</strong><br>
-            ・表示された分子式の構造異性体を組み立てて<br>
-            　「提出」を押す。<br>
-            ・正解すると下にスクショが保存されます。<br>
-            ・その問題の異性体を【すべて】見つければクリアです！
-        </p>
-        <div style="display: flex; flex-direction: column; gap: 12px; max-width: 250px; margin: 0 auto;">
-            <button id="startNewBtn" style="background-color: #10b981; font-size: 1.1rem; padding: 12px;">最初からスタート</button>
-            <button id="startResumeBtn" class="hidden" style="background-color: #2563eb; font-size: 1.1rem; padding: 12px;">続きからスタート</button>
+        
+        <div id="modeSelectSection" style="display: flex; flex-direction: column; gap: 15px; max-width: 280px; margin: 0 auto 25px;">
+            <button id="chooseAllBtn" style="background-color: #2563eb; font-size: 1.1rem; padding: 15px;">全問を解く</button>
+            <button id="chooseSelectBtn" style="background-color: #a855f7; font-size: 1.1rem; padding: 15px;">分子式別で解く</button>
         </div>
+
+        <div id="allPlaySubMenu" class="hidden">
+            <p style="font-size: 0.95rem; color: #475569; text-align: left; background-color: #f8fafc; padding: 15px; border-radius: 8px; line-height: 1.6; margin-bottom: 25px;">
+                <strong>【全問クリアモード】</strong><br>
+                ・1問目（チュートリアル）から順番にすべての問題を解いていきます。<br>
+                ・アルキル基の－Hを省略した構造式を書きます。<br>
+                ・主鎖は横一直線に書きます。<br>
+                ・その問題の構造異性体をすべて見つければクリアです！
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 12px; max-width: 250px; margin: 0 auto;">
+                <button id="startNewBtn" style="background-color: #10b981; font-size: 1.1rem; padding: 12px;">最初からスタート</button>
+                <button id="startResumeBtn" class="hidden" style="background-color: #0284c7; font-size: 1.1rem; padding: 12px;">続きからスタート</button>
+                <button id="backToModeBtn" style="background-color: #64748b; font-size: 0.9rem; padding: 8px;">戻る</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="quizSelectScreen" class="hidden" style="padding: 20px 10px;">
+        <h2 style="font-size: 1.6rem; color: #a855f7; margin-bottom: 10px;">分子式を選択</h2>
+        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 20px;">解きたい分子式を選んでください。<br>
+                ・アルキル基の－Hを省略した構造式を書きます。<br>
+                ・主鎖は横一直線に書きます。<br>
+                ・その問題の構造異性体をすべて見つければクリアです！
+
+        </p>
+        
+        <div id="quizListContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; max-width: 450px; margin: 0 auto 25px; padding: 5px;"></div>
+   
+        <button id="backToModeFromSelectBtn" style="background-color: #64748b; font-size: 1rem; padding: 10px 20px;">戻る</button>
     </div>
 
     <div id="gameClearScreen" class="hidden" style="padding: 30px 10px;">
         <div style="font-size: 4rem; margin-bottom: 10px;">🎉</div>
         <h1 style="font-size: 1.8rem; color: #10b981; margin-bottom: 15px;">全問クリア！！</h1>
         <p style="font-size: 1.05rem; color: #334155; font-weight: bold; margin-bottom: 30px; line-height: 1.6;">
-            おめでとうございます！<br>すべての異性体を完全にマスターしました！
+            おめでとうございます！<br>鎖状構造異性体をマスターしました！
         </p>
         <button id="restartGameBtn" style="background-color: #e144ef; font-size: 1.1rem; padding: 12px 25px;">もう一度最初から解く</button>
     </div>
 
-    <div id="quizPlayArea">
+    <div id="quizPlayArea" class="hidden">
         <div class="formula-section" style="display: flex; justify-content: space-between; align-items: center;">
             <span id="problemText"></span>
             <span id="quizProgress" style="font-size: 0.85rem; background-color: #0284c7; color: white; padding: 2px 8px; border-radius: 20px; white-space: nowrap; margin-left: 10px;"></span>
@@ -382,7 +270,6 @@
     const correctSound = createAudio("https://raw.githubusercontent.com/1-1chem/isomergame/main/seikai.mp3", 0.5);
     const nextQSound = createAudio("https://raw.githubusercontent.com/1-1chem/isomergame/main/nextQue.mp3", 0.5);
 
-
     function playAudio(audioObj) {
         if (!audioObj) return;
         audioObj.currentTime = 0;
@@ -390,41 +277,42 @@
     }
 
     // 共通スタイル定数
-    const styleNormalBtn = `display:inline-flex; padding:4px 10px; font-size:0.9rem; pointer-events:none; background-color:#e5e7eb !important; color:#000000 !important; border:1px solid #9ca3af; font-weight:bold; margin:0 4px; box-shadow:0 1px 2px rgba(0,0,0,0.05);`;
     const styleBlueBtn   = `display:inline-flex; padding:4px 10px; font-size:0.9rem; pointer-events:none; background-color:#2563eb !important; color:white !important; font-weight:bold; margin:0 4px; border:none; box-shadow:0 1px 2px rgba(0,0,0,0.05);`;
     const styleRedBtn    = `display:inline-flex; padding:4px 10px; font-size:0.9rem; pointer-events:none; background-color:#f6645c !important; color:white !important; font-weight:bold; margin:0 4px; border:none; box-shadow:0 1px 2px rgba(0,0,0,0.05);`;
     const styleGreenBtn  = `display:inline-flex; padding:4px 10px; font-size:0.9rem; pointer-events:none; background-color:#10b981 !important; color:white !important; font-weight:bold; margin:0 4px; border:none; box-shadow:0 1px 2px rgba(0,0,0,0.05);`;
 
-        const quizList = [
-        {question: "2,2-ジメチルプロパンの構造式", 
-            totalIsomers: 1, 
+    // 元の1つにまとまったオリジナルクイズデータ
+    const quizList = [
+        {
+            formulaGroup: "チュートリアル",
+            question: "2,2-ジメチルプロパンの構造式",
+            totalIsomers: 1,
             answers: [["CC(C)(C)C"]],
             tutorialSteps: [
-            `主鎖を書くので <button style="background-color:#7f7f7f; padding:3px 8px; font-size:0.85rem;">－C</button> を押す（1回目）`,
-            `主鎖を書くので <button style="background-color:#7f7f7f; padding:3px 8px; font-size:0.85rem;">－C</button> を押す（2回目）`,
-            `側鎖を書くので <span class="action-btn" style="${styleBlueBtn}">側鎖へ</span> を押す`,
-            `2番目の炭素に移動するために <span class="action-btn" style="${styleBlueBtn}">隣のCへ</span> を押す`,
-            `下に炭素を結合するので <button style="background-color:#9d9d9d; padding:3px 8px; font-size:0.85rem; color:white; display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1;"><span style="transform:rotate(90deg); margin-bottom:-4px; margin-top:-2px; font-size:0.6rem;">－</span><div style="font-size:0.85rem; font-weight:bold;">C</div></button> を押す`,
-            `上に炭素を結合するので <button style="background-color:#9d9d9d; padding:3px 8px; font-size:0.85rem; color:white; display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1;"><div style="font-size:0.85rem; font-weight:bold;">C</div><span style="transform:rotate(90deg); margin-top:-4px; margin-bottom:-2px; font-size:0.6rem;">－</span></button> を押す`,
-            `これで完成です！ <span class="action-btn" style="${styleGreenBtn}">提出</span> を押す`
-        ]},
-        {question: "分子式C<sub>4</sub>H<sub>10</sub>の異性体", totalIsomers: 2, answers: [ ["CCCC"],["CC(C)C","CC(C)C"] ]},
-        {question: "分子式C<sub>5</sub>H<sub>12</sub>の異性体", totalIsomers: 3, answers: [ ["CCCCC"],["CC(C)CC","CCC(C)C"],["CC(C)(C)C"] ]},
-        {question: "分子式C<sub>6</sub>H<sub>14</sub>の異性体", totalIsomers: 5, answers: [ ["CCCCCC"],["CC(C)CCC","CCCC(C)C"],["CCC(C)CC"],["CC(C)(C)CC","CCC(C)(C)C"],["CC(C)C(C)C"] ]},
-        {question: "分子式C<sub>7</sub>H<sub>16</sub>で主鎖の炭素数7か6の構造式", totalIsomers: 3, answers: [ ["CCCCCCC"],["CC(C)CCCC","CCCCC(C)C"],["CCC(C)CCC","CCCC(C)CC"] ]},
-        {question: "分子式C<sub>7</sub>H<sub>16</sub>で主鎖の炭素数5か4の構造式", totalIsomers: 6, answers: [ ["CC(C)(C)CCC","CCCC(C)(C)C"],["CC(C)C(C)CC","CCC(C)C(C)C"],["CC(C)CC(C)C","CC(C)CC(C)C"],["CCC(C)(C)CC"],["CCC(CC)CC"],["CC(C)(C)C(C)C","CC(C)C(C)(C)C"] ]},
-        {question: "分子式C<sub>8</sub>H<sub>18</sub>で主鎖の炭素数8か7の異性体", totalIsomers: 3, answers: [ ["CCCCCCCC" ],["CC(C)CCCCC","CCCCCC(C)C"],["CCC(C)CCCC","CCCCC(C)CC"],["CCC(C)CCCC"] ]},
-        {question: "分子式C<sub>8</sub>H<sub>18</sub>で主鎖の炭素数6の異性体", totalIsomers: 7, answers: [ ["CC(C)(C)CCCC","CCCCC(C)(C)C"],["CC(C)C(C)CCC","CCCC(C)C(C)C"],["CC(C)CC(C)CC","CCC(C)CC(C)C"],["CC(C)CCC(C)C","CC(C)CCC(C)C"],["CCC(C)(C)CCC","CCCC(C)(C)CC"],["CCC(CC)CCC","CCCC(CC)CC"],["CCC(C)C(C)CC","CCC(C)C(C)CC"] ]},
-        {question: "分子式C<sub>8</sub>H<sub>18</sub>で主鎖の炭素数5の異性体", totalIsomers: 6,answers: [ ["CC(C)(C)C(C)CC","CCC(C)C(C)(C)C"],["CC(C)(C)CC(C)C","CC(C)CC(C)(C)C"],["CC(C)C(C)C(C)C"],["CCC(C)(CC)CC"],["CC(C)C(CC)CC","CCC(CC)C(C)C"],["CC(C)C(C)(C)CC","CCC(C)(C)C(C)C"]]},
-        {question: "分子式C<sub>8</sub>H<sub>18</sub>で主鎖の炭素数4の異性体", totalIsomers: 1, answers: [ ["CC(C)(C)C(C)(C)C"] ]},
-        {question: "分子式C<sub>3</sub>H<sub>8</sub>Oの異性体", totalIsomers: 3,answers: [["CCC(OH)","C(OH)CC", "CCCOH"],["CC(OH)C"],["COCC)","CCOC"]]},
-        {question: "分子式C<sub>4</sub>H<sub>10</sub>Oのアルコールの異性体", totalIsomers: 4,answers: [["C(OH)CCC","CCCC(OH)","CCCCOH"],["CC(OH)CC","CCC(OH)C"],["CC(C)(OH)C"],["C(OH)C(C)C","CC(C)C(OH)","CC(C)COH"]]},
-        {question: "分子式C<sub>4</sub>H<sub>10</sub>Oのエーテルの異性体", totalIsomers: 3,answers: [["COCCC","CCCOC"],["CCOCC"],["CC(C)OC"],["COC(C)C"]]},
-        {question: "分子式C<sub>5</sub>H<sub>12</sub>Oのアルコールの異性体", totalIsomers: 8,answers: [["C(OH)CCCC","CCCCC(OH)","CCCCCOH"],["CC(OH)CCC","CCCC(OH)C"],["CCC(OH)CC"],["C(OH)CC(C)C","CC(C)CC(OH)","CC(C)CCOH"],["CC(OH)C(C)C","CC(C)C(OH)C"],["CCC(C)(OH)C","CC(C)(OH)CC"], ["CCC(C)C(OH)","C(OH)C(C)CC","CCC(C)COH"],["C(OH)C(C)(C)C","CC(C)(COH)C","CC(C)(C)C(OH)","CC(C)(C)COH"]]},
-        {question: "分子式C<sub>5</sub>H<sub>12</sub>Oのエーテルの異性体", totalIsomers: 6,answers: [["COCCCC","CCCCOC"],["CCOCCC","CCCOCC"],["COC(C)CC","CCC(C)OC"],["COCC(C)C","CC(C)COC"],["COC(C)(C)C","CC(C)(C)OC"],["CCOC(C)C","CC(C)OCC"]]},
-        {question: "酢酸の構造式", 
-            totalIsomers: 1,
-            answers: [["CC(=O)OH"]],
+                `主鎖を書くので <button style="background-color:#7f7f7f; padding:3px 8px; font-size:0.85rem;">－C</button> を押す（1回目）`,
+                `主鎖を書くので <button style="background-color:#7f7f7f; padding:3px 8px; font-size:0.85rem;">－C</button> を押す（2回目）`,
+                `側鎖を書くので <span class="action-btn" style="${styleBlueBtn}">側鎖へ</span> を押す`,
+                `2番目の炭素に移動するために <span class="action-btn" style="${styleBlueBtn}">隣のCへ</span> を押す`,
+                `下に炭素を結合するので <button style="background-color:#9d9d9d; padding:3px 8px; font-size:0.85rem; color:white; display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1;"><span style="transform:rotate(90deg); margin-bottom:-4px; margin-top:-2px; font-size:0.6rem;">－</span><div style="font-size:0.85rem; font-weight:bold;">C</div></button> を押す`,
+                `上に炭素を結合するので <button style="background-color:#9d9d9d; padding:3px 8px; font-size:0.85rem; color:white; display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1;"><div style="font-size:0.85rem; font-weight:bold;">C</div><span style="transform:rotate(90deg); margin-top:-4px; margin-bottom:-2px; font-size:0.6rem;">－</span></button> を押す`,
+                `これで完成です！ <span class="action-btn" style="${styleGreenBtn}">提出</span> を押す`
+            ]
+        },
+        { formulaGroup: "C4H10", question: "分子式C<sub>4</sub>H<sub>10</sub>の異性体", totalIsomers: 2, answers: [ ["CCCC"],["CC(C)C","CC(C)C"] ]},
+        { formulaGroup: "C5H12", question: "分子式C<sub>5</sub>H<sub>12</sub>の異性体", totalIsomers: 3, answers: [ ["CCCCC"],["CC(C)CC","CCC(C)C"],["CC(C)(C)C"] ]},
+        { formulaGroup: "C6H14", question: "分子式C<sub>6</sub>H<sub>14</sub>の異性体", totalIsomers: 5, answers: [ ["CCCCCC"],["CC(C)CCC","CCCC(C)C"],["CCC(C)CC"],["CC(C)(C)CC","CCC(C)(C)C"],["CC(C)C(C)C"] ]},
+        { formulaGroup: "C7H16", question: "分子式C<sub>7</sub>H<sub>16</sub>で主鎖の炭素数7か6の構造式", totalIsomers: 3, answers: [ ["CCCCCCC"],["CC(C)CCCC","CCCCC(C)C"],["CCC(C)CCC","CCCC(C)CC"] ]},
+        { formulaGroup: "C7H16", question: "分子式C<sub>7</sub>H<sub>16</sub>で主鎖の炭素数5か4の構造式", totalIsomers: 6, answers: [ ["CC(C)(C)CCC","CCCC(C)(C)C"],["CC(C)C(C)CC","CCC(C)C(C)C"],["CC(C)CC(C)C"],["CCC(C)(C)CC"],["CCC(CC)CC"],["CC(C)(C)C(C)C","CC(C)C(C)(C)C"]]},
+        { formulaGroup: "C8H18", question: "分子式C<sub>8</sub>H<sub>18</sub>で主鎖の炭素数8か7の異性体", totalIsomers: 3, answers: [ ["CCCCCCCC" ],["CC(C)CCCCC","CCCCCC(C)C"],["CCC(C)CCCC","CCCCC(C)CC"],["CCCC(C)CCC"] ]},
+        { formulaGroup: "C8H18", question: "分子式C<sub>8</sub>H<sub>18</sub>で主鎖の炭素数6の異性体", totalIsomers: 7, answers: [ ["CC(C)(C)CCCC","CCCCC(C)(C)C"],["CC(C)C(C)CCC","CCCC(C)C(C)C"],["CC(C)CC(C)CC","CCC(C)CC(C)C"],["CC(C)CCC(C)C"],["CCC(C)(C)CCC","CCCC(C)(C)CC"],["CCC(CC)CCC","CCCC(CC)CC"],["CCC(C)C(C)CC"] ]},
+        { formulaGroup: "C8H18", question: "分子式C<sub>8</sub>H<sub>18</sub>で主鎖の炭素数5の異性体", totalIsomers: 6,answers: [ ["CC(C)(C)C(C)CC","CCC(C)C(C)(C)C"],["CC(C)(C)CC(C)C","CC(C)CC(C)(C)C"],["CC(C)C(C)C(C)C"],["CCC(C)(CC)CC","CCC(CC)(C)CC"],["CC(C)C(CC)CC","CCC(CC)C(C)C"],["CC(C)C(C)(C)CC","CCC(C)(C)C(C)C"]]},
+        { formulaGroup: "C8H18", question: "分子式C<sub>8</sub>H<sub>18</sub>で主鎖の炭素数4の異性体", totalIsomers: 1, answers: [ ["CC(C)(C)C(C)(C)C"] ]},
+        { formulaGroup: "C3H8O", question: "分子式C<sub>3</sub>H<sub>8</sub>Oの異性体", totalIsomers: 3,answers: [["CCC(OH)","C(OH)CC", "CCCOH"],["CC(OH)C"],["COCC)","CCOC"]]},
+        { formulaGroup: "C4H10O", question: "分子式C<sub>4</sub>H<sub>10</sub>Oのアルコールの異性体", totalIsomers: 4,answers: [["C(OH)CCC","CCCC(OH)","CCCCOH"],["CC(OH)CC","CCC(OH)C"],["CC(C)(OH)C"],["C(OH)C(C)C","CC(C)C(OH)","CC(C)COH"]]},
+        { formulaGroup: "C4H10O", question: "分子式C<sub>4</sub>H<sub>10</sub>Oのエーテルの異性体", totalIsomers: 3,answers: [["COCCC","CCCOC"],["CCOCC"],["CC(C)OC","COC(C)C"]]},
+        { formulaGroup: "C5H12O", question: "分子式C<sub>5</sub>H<sub>12</sub>Oのアルコールの異性体", totalIsomers: 8,answers: [["C(OH)CCCC","CCCCC(OH)","CCCCCOH"],["CC(OH)CCC","CCCC(OH)C"],["CCC(OH)CC"],["C(OH)CC(C)C","CC(C)CC(OH)","CC(C)CCOH"],["CC(OH)C(C)C","CC(C)C(OH)C"],["CCC(C)(OH)C","CC(C)(OH)CC"], ["CCC(C)C(OH)","C(OH)C(C)CC","CCC(C)COH"],["C(OH)C(C)(C)C","CC(C)(COH)C","CC(C)(C)C(OH)","CC(C)(C)COH"]]},
+        { formulaGroup: "C5H12O", question: "分子式C<sub>5</sub>H<sub>12</sub>Oのエーテルの異性体", totalIsomers: 6,answers: [["COCCCC","CCCCOC"],["CCOCCC","CCCOCC"],["COC(C)CC","CCC(C)OC"],["COCC(C)C","CC(C)COC"],["COC(C)(C)C","CC(C)(C)OC"],["CCOC(C)C","CC(C)OCC"]]},
+        { formulaGroup: "酢酸チュートリアル",question: "酢酸の構造式",totalIsomers: 1, answers: [["CC(=O)OH"]],
             tutorialSteps: [
             `主鎖を書くので <button style="background-color:#7f7f7f; padding:3px 8px; font-size:0.85rem;">－C</button> を押す`,
             `カルボキシ基は先に <span class="action-btn" style="${styleRedBtn}">－OH</span> を押す`,
@@ -432,16 +320,25 @@
             `2番に移動するために <span class="action-btn" style="${styleBlueBtn}">隣のCへ</span> を押す`,
             `「＝O」を結合するので <button style="background-color:#f6645c; padding:3px 8px; font-size:0.85rem; color:white; display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1;"><span style="transform:rotate(90deg); margin-bottom:-4px; margin-top:2px; font-size:0.6rem;">＝</span><div style="font-size:0.85rem; font-weight:bold;">O</div></button> を押す`,                `これで完成です！ <span class="action-btn" style="${styleGreenBtn}">提出</span> を押す`
         ]},
-        {question: "分子式C<sub>2</sub>H<sub>4</sub>O<sub>2</sub>の異性体", totalIsomers: 2,answers: [["CC(=O)OH"],["C(=O)OC","COC(=O)"]]},
-        {question: "分子式C<sub>3</sub>H<sub>6</sub>Oの異性体", totalIsomers: 2,answers: [["CCC(=O)","C(=O)CC"],["CC(=O)C"]]},
-        {question: "分子式C<sub>4</sub>H<sub>8</sub>Oのアルデヒドとケトンの異性体", totalIsomers: 3,answers: [["CCCC(=O)","C(=O)CCC"],["CC(=O)CC","CCC(=O)C"],["CC(C)C(=O)"],["C(=O)C(C)C"]]},
-        {question: "分子式C<sub>3</sub>H<sub>6</sub>O<sub>2</sub>のカルボン酸とエステルの異性体", totalIsomers: 3,answers: [["CCC(=O)OH"],["CC(=O)OC","COC(=O)C"],["C(=O)OCC","CCOC(=O)"]]},
-        {question: "分子式C<sub>4</sub>H<sub>8</sub>O<sub>2</sub>のカルボン酸とエステルの異性体", totalIsomers: 6,answers: [["CCCC(=O)OH"],["CC(C)C(=O)OH"],["CCC(=O)OC","COC(=O)CC"],["CC(=O)OCC","CCOC(=O)C"],["C(=O)OCCC","CCCOC(=O)"],["C(=O)OC(C)C","CC(C)OC(=O)"]]},
+        { formulaGroup: "C2H4O2", question: "分子式C<sub>2</sub>H<sub>4</sub>O<sub>2</sub>の異性体", totalIsomers: 2,answers: [["CC(=O)OH"],["C(=O)OC","COC(=O)"]]},
+        { formulaGroup: "C3H6O", question: "分子式C<sub>3</sub>H<sub>6</sub>Oの異性体", totalIsomers: 2,answers: [["CCC(=O)","C(=O)CC"],["CC(=O)C"]]},
+        { formulaGroup: "C4H8O", question: "分子式C<sub>4</sub>H<sub>8</sub>Oのアルデヒドとケトンの異性体", totalIsomers: 3,answers: [["CCCC(=O)","C(=O)CCC"],["CC(=O)CC","CCC(=O)C"],["CC(C)C(=O)","C(=O)C(C)C"]]},
+        { formulaGroup: "C3H6O2", question: "分子式C<sub>3</sub>H<sub>6</sub>O<sub>2</sub>のカルボン酸とエステルの異性体", totalIsomers: 3,answers: [["CCC(=O)OH"],["CC(=O)OC","COC(=O)C"],["C(=O)OCC","CCOC(=O)"]]},
+        { formulaGroup: "C4H8O2", question: "分子式C<sub>4</sub>H<sub>8</sub>O<sub>2</sub>のカルボン酸とエステルの異性体", totalIsomers: 6,answers: [["CCCC(=O)OH"],["CC(C)C(=O)OH"],["CCC(=O)OC","COC(=O)CC"],["CC(=O)OCC","CCOC(=O)C"],["C(=O)OCCC","CCCOC(=O)"],["C(=O)OC(C)C","CC(C)OC(=O)"]]},
+        { formulaGroup: "C5H10O2", question: "分子式C<sub>5</sub>H<sub>10</sub>O<sub>2</sub>のカルボン酸の異性体", totalIsomers: 4,answers: [["CCCCC(=O)OH"],["CCC(C)C(=O)OH"],["CC(C)CC(=O)OH"],["CC(C)(C)C(=O)OH","OHC(=O)C(C)(C)C"]]},
+        { formulaGroup: "C5H10O2", question: "分子式C<sub>5</sub>H<sub>10</sub>O<sub>2</sub>のエステルの異性体", totalIsomers: 9,answers: [["CCCC(=O)OC","COC(=O)CCC"],["CC(C)C(=O)OC","COC(=O)C(C)C"],["CCC(=O)OCC","CCOC(=O)CC"],["CC(=O)OCCC","CCCOC(=O)C"],["CC(=O)OC(C)C","CC(C)OC(=O)C"],["C(=O)OCCCC","CCCCOC(=O)"],["C(=O)OCC(C)C","CC(C)COC(=O)"],["C(=O)OC(C)CC","CCC(C)OC(=O)"],["C(=O)OC(C)(C)C","CC(C)(C)OC(=O)"]]},
+
     ];
 
     let tutorialStep = 0; 
     let currentQuizIndex = 0; 
     let foundIsomers = [];    
+
+    let playMode = "all"; // "all" または "select"
+    let selectModeTargetGroup = ""; 
+    let selectModeIndices = []; // 選択されたグループに属する問題の、元配列でのインデックス一覧
+    let selectModeCurrentSubIndex = 0; 
+    let clearedGroups = []; 
 
     const canvas = document.getElementById('canvas');
     const mainMenu = document.getElementById('mainMenu');
@@ -472,6 +369,15 @@
     const restartGameBtn = document.getElementById('restartGameBtn');
     const quizProgress = document.getElementById('quizProgress');
 
+    const quizSelectScreen = document.getElementById('quizSelectScreen');
+    const modeSelectSection = document.getElementById('modeSelectSection');
+    const allPlaySubMenu = document.getElementById('allPlaySubMenu');
+    const quizListContainer = document.getElementById('quizListContainer');
+    const chooseAllBtn = document.getElementById('chooseAllBtn');
+    const chooseSelectBtn = document.getElementById('chooseSelectBtn');
+    const backToModeBtn = document.getElementById('backToModeBtn');
+    const backToModeFromSelectBtn = document.getElementById('backToModeFromSelectBtn');
+
     let atoms = [];       
     let cCount = 1;       
     let selectedCId = null; 
@@ -486,10 +392,16 @@
         if(startScreen) startScreen.classList.add('hidden');
         if(gameClearScreen) gameClearScreen.classList.add('hidden');
         if(quizPlayArea) quizPlayArea.classList.add('hidden');
+        if(quizSelectScreen) quizSelectScreen.classList.add('hidden');
     }
 
     function saveCurrentProgress() {
         const dataToSave = {
+            playMode: playMode,
+            selectModeTargetGroup: selectModeTargetGroup,
+            selectModeIndices: selectModeIndices,
+            selectModeCurrentSubIndex: selectModeCurrentSubIndex,
+            clearedGroups: clearedGroups,
             quizIndex: currentQuizIndex,
             tutorialStep: tutorialStep,
             foundIsomers: foundIsomers,
@@ -507,6 +419,11 @@
 
         try {
             const saved = JSON.parse(rawData);
+            playMode = saved.playMode || "all";
+            selectModeTargetGroup = saved.selectModeTargetGroup || "";
+            selectModeIndices = saved.selectModeIndices || [];
+            selectModeCurrentSubIndex = saved.selectModeCurrentSubIndex || 0;
+            clearedGroups = saved.clearedGroups || [];
             currentQuizIndex = saved.quizIndex;
             tutorialStep = saved.tutorialStep;
             foundIsomers = saved.foundIsomers || [];
@@ -517,8 +434,8 @@
             hideAllScreens();
             if(quizPlayArea) quizPlayArea.classList.remove('hidden');
 
-            document.getElementById('problemText').innerHTML = quizList[currentQuizIndex].question;
-            if (quizProgress) quizProgress.textContent = `${currentQuizIndex + 1} / ${quizList.length}問目`;
+            setQuestionText(quizList[currentQuizIndex]);
+            updateProgressText();
             screenshotContainer.innerHTML = saved.screenshotsHTML || '';
             
             if (selectedCId !== null) {
@@ -540,7 +457,7 @@
                 resetBtn.classList.add('hidden');
                 controlMenu.classList.remove('hidden');
                 nextQuizBtn.classList.remove('hidden');
-                showFeedback("全て書きました", "text-complete", 0);
+                showFeedback("全て書しました", "text-complete", 0);
                 canvas.innerHTML = '';
             } else {
                 render();
@@ -551,6 +468,27 @@
             console.error("セーブデータの読み込み失敗:", e);
             return false;
         }
+    }
+
+    function updateProgressText() {
+        if (!quizProgress) return;
+        if (playMode === "all") {
+            quizProgress.textContent = `${currentQuizIndex + 1} / ${quizList.length}問目`;
+        } else {
+            const formulaHTML = convertFormulaToSub(selectModeTargetGroup);
+            quizProgress.innerHTML = `${formulaHTML} (${selectModeCurrentSubIndex + 1}/${selectModeIndices.length}問目)`;
+        }
+    }
+
+    // 問題文をセットする関数（分子式がO2で終わる場合に「（カルボン酸とエステル）」を自動で追加）
+    function setQuestionText(quizObj) {
+        if (!quizObj) return;
+        let text = quizObj.question;
+        // 分子式グループ名が「O2」で終わるか判定
+        if (quizObj.formulaGroup && quizObj.formulaGroup.endsWith("O2")) {
+            text += "（カルボン酸とエステル）";
+        }
+        document.getElementById('problemText').innerHTML = text;
     }
 
     function updateTutorialMessage() {
@@ -566,11 +504,10 @@
     }
 
     function showTutorialWarning() {
-        playAudio(tutorialMissSound); // ★ミス音を再生
+        playAudio(tutorialMissSound);
         alert("手順が違います！メッセージに書かれたボタンを押してください。");
     }
 
-    // ★チュートリアル中に「指示外のすべての行動」をキャッチして弾く完全版ロジック
     function checkTutorialStep(buttonType) {
         const activeQuiz = quizList[currentQuizIndex];
         if (!activeQuiz || !activeQuiz.tutorialSteps) return true;
@@ -608,7 +545,7 @@
     }
 
     function loadQuiz(index) {
-        if (index >= quizList.length) {
+        if (playMode === "all" && index >= quizList.length) {
             hideAllScreens();
             if(gameClearScreen) gameClearScreen.classList.remove('hidden');
             localStorage.removeItem('isomerApp_full_progress'); 
@@ -626,10 +563,8 @@
         openSideBtn.classList.remove('hidden');
         resetBtn.classList.remove('hidden');
         
-        document.getElementById('problemText').innerHTML = quizList[currentQuizIndex].question;
-        if (quizProgress) {
-            quizProgress.textContent = `${currentQuizIndex + 1} / ${quizList.length}問目`;
-        }
+        setQuestionText(quizList[currentQuizIndex]);
+        updateProgressText();
         
         resetToMain();
         
@@ -812,6 +747,78 @@
         }
     }
 
+    function convertFormulaToSub(formulaStr) {
+        return formulaStr.replace(/([A-Za-zα-γ、\-（）]+)(\d+)/g, '$1<sub>$2</sub>').replace(/(\d+)/g, '<sub>$1</sub>');
+    }
+
+    // 分子式選択画面のボタン生成（純粋な分子式のみを表示）
+    function renderFormulaGroupButtons() {
+        quizListContainer.innerHTML = '';
+        
+        // 元の配列からユニークなグループ名の一覧（チュートリアル系は除く）を抽出
+        const groups = [];
+        quizList.forEach(q => {
+            if (q.formulaGroup !== "チュートリアル" && q.formulaGroup !== "酢酸チュートリアル") {
+                if (!groups.includes(q.formulaGroup)) {
+                    groups.push(q.formulaGroup);
+                }
+            }
+        });
+
+        groups.forEach(groupName => {
+            const btn = document.createElement('button');
+            btn.style.width = '100%';
+            btn.style.padding = '12px 8px';
+            btn.style.fontSize = '0.95rem';
+            btn.style.borderRadius = '6px';
+            btn.style.display = 'block';
+            btn.style.textAlign = 'center';
+            btn.style.boxSizing = 'border-box';
+            btn.style.whiteSpace = 'normal'; 
+            btn.style.wordBreak = 'break-word';
+
+            const formulaHTML = convertFormulaToSub(groupName);
+            const isCleared = clearedGroups.includes(groupName);
+
+            if (isCleared) {
+                btn.style.backgroundColor = '#cbd5e1';
+                btn.style.color = '#64748b';
+                btn.style.border = '1px solid #94a3b8';
+                btn.style.cursor = 'not-allowed';
+                btn.innerHTML = `${formulaHTML}<br><span style="font-size:0.75rem; font-weight:normal; opacity:0.8;">済</span>`;
+            } else {
+                btn.style.backgroundColor = '#f3e8ff';
+                btn.style.color = '#6b21a8';
+                btn.style.border = '1px solid #d8b4fe';
+                btn.innerHTML = `<strong>${formulaHTML}</strong>`;
+                
+                btn.addEventListener('click', () => {
+                    playAudio(clickSound);
+                    startSelectModeGroup(groupName);
+                });
+            }
+            quizListContainer.appendChild(btn);
+        });
+    }
+
+    // 元データ（配列）から該当する要素のインデックス（番号）を探してリスト化する
+    function startSelectModeGroup(groupName) {
+        playMode = "select";
+        selectModeTargetGroup = groupName;
+        selectModeIndices = [];
+        
+        // 元のquizListをループして、一致するインデックス（配列上の位置）を収集する
+        quizList.forEach((q, idx) => {
+            if (q.formulaGroup === groupName) {
+                selectModeIndices.push(idx);
+            }
+        });
+        
+        selectModeCurrentSubIndex = 0;
+        // 収集した最初のインデックスでクイズをロード
+        loadQuiz(selectModeIndices[selectModeCurrentSubIndex]);
+    }
+
     // ==========================================
     // 各種操作ボタンのイベント
     // ==========================================
@@ -827,7 +834,6 @@
         saveCurrentProgress();
     });
 
-    // ★－Oボタン（チュートリアルチェック 'addO' を追加して誤操作を完全ブロック）
     addOBtn.addEventListener('click', () => {
         playAudio(clickSound);
         if (!checkTutorialStep('addO')) return; 
@@ -905,7 +911,7 @@
 
     addOHBtn.addEventListener('click', () => {
         playAudio(clickSound);
-        if (!checkTutorialStep('sideOH')) return; // 側鎖OHもチェック
+        if (!checkTutorialStep('sideOH')) return; 
         saveState();
         const currentAtom = atoms.find(a => a.id === selectedCId);
         let lastInColumn = currentAtom;
@@ -957,7 +963,7 @@
 
     undoBtn.addEventListener('click', () => {
         playAudio(clickSound);
-        if (!checkTutorialStep('undo')) return; // チュートリアル中Undoもブロック
+        if (!checkTutorialStep('undo')) return; 
         if (stateHistory.length > 0) {
             const prevState = stateHistory.pop();
             atoms = prevState.atoms;
@@ -974,6 +980,7 @@
         saveState();
         const activeQuiz = quizList[currentQuizIndex];
         const currentSmiles = generateSmiles();
+        console.log("現在のSMILES:", currentSmiles);
     
         let matchedIndex = -1;
         for (let i = 0; i < activeQuiz.answers.length; i++) {
@@ -996,7 +1003,7 @@
         if (matchedIndex !== -1) {
             if (foundIsomers.includes(matchedIndex)) {
                 lockControls(); 
-                playAudio(missSound); // すでに書いた場合の不正解音
+                playAudio(missSound); 
                 showFeedback("不正解\n(既に書きました)", "text-incorrect", 2000);
             } else {
                 foundIsomers.push(matchedIndex);
@@ -1028,11 +1035,16 @@
                         resetBtn.classList.add('hidden');
                         controlMenu.classList.remove('hidden');
                         nextQuizBtn.classList.remove('hidden');
-                        //playAudio(correctSound);
-                        showFeedback("全て書きました", "text-complete", 0); 
+                        
+                        if (playMode === "select" && selectModeCurrentSubIndex + 1 >= selectModeIndices.length) {
+                            nextQuizBtn.textContent = "選択メニューへ戻る";
+                        } else {
+                            nextQuizBtn.textContent = "次の問題へ";
+                        }
+
+                        showFeedback("全て書しました", "text-complete", 0); 
                         canvas.innerHTML = '';
                     } else {
-                        //playAudio(correctSound);
                         showFeedback("正解", "text-complete", 2000); 
                     }
                     saveCurrentProgress(); 
@@ -1040,7 +1052,7 @@
             }
         } else {
             lockControls(); 
-            playAudio(missSound); // 通常の不正解音
+            playAudio(missSound); 
             showFeedback("不正解", "text-incorrect", 2000);
         }
     });
@@ -1048,7 +1060,24 @@
     nextQuizBtn.addEventListener('click', () => {
         playAudio(nextQSound);
         feedbackOverlay.classList.add('hidden'); 
-        loadQuiz(currentQuizIndex + 1);
+        
+        if (playMode === "all") {
+            loadQuiz(currentQuizIndex + 1);
+        } else {
+            selectModeCurrentSubIndex++;
+            if (selectModeCurrentSubIndex < selectModeIndices.length) {
+                loadQuiz(selectModeIndices[selectModeCurrentSubIndex]);
+            } else {
+                if (!clearedGroups.includes(selectModeTargetGroup)) {
+                    clearedGroups.push(selectModeTargetGroup);
+                }
+                saveCurrentProgress();
+                
+                hideAllScreens();
+                quizSelectScreen.classList.remove('hidden');
+                renderFormulaGroupButtons();
+            }
+        }
     });
 
     // ==========================================
@@ -1058,16 +1087,20 @@
     const LONG_PRESS_TIME = 1000; 
 
     function startResetTimer(e) {
-        // ★ここを追加：チュートリアル中はミス判定にして長押しを始めさせない
         if (!checkTutorialStep('reset')) return; 
 
         if (e.type === 'touchstart') e.preventDefault(); 
         if (longPressTimer) clearTimeout(longPressTimer);
 
         longPressTimer = setTimeout(() => {
-            if (confirm("これまでのゲームの進み具合をリセットして、1問目に戻しますか？")) {
+            if (confirm("これまでのゲームの進み具合（クリア情報含む）を完全にリセットして戻しますか？")) {
                 localStorage.removeItem('isomerApp_full_progress'); 
-                loadQuiz(0); 
+                clearedGroups = [];
+                playMode = "all";
+                hideAllScreens();
+                startScreen.classList.remove('hidden');
+                modeSelectSection.classList.remove('hidden');
+                allPlaySubMenu.classList.add('hidden');
             }
             longPressTimer = null; 
         }, LONG_PRESS_TIME);
@@ -1089,12 +1122,51 @@
     resetBtn.addEventListener('touchcancel', cancelResetTimer);
 
     // ==========================================
-    // スタート画面・終了画面の遷移ボタン
+    // スタート画面・選択画面の遷移ボタン
     // ==========================================
+    chooseAllBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        modeSelectSection.classList.add('hidden');
+        allPlaySubMenu.classList.remove('hidden');
+        
+        const rawData = localStorage.getItem('isomerApp_full_progress');
+        if (rawData && startResumeBtn) {
+            startResumeBtn.classList.remove('hidden');
+        } else if (startResumeBtn) {
+            startResumeBtn.classList.add('hidden');
+        }
+    });
+
+    backToModeBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        allPlaySubMenu.classList.add('hidden');
+        modeSelectSection.classList.remove('hidden');
+    });
+
+    chooseSelectBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        playMode = "select";
+        hideAllScreens();
+        quizSelectScreen.classList.remove('hidden');
+        renderFormulaGroupButtons();
+    });
+
+    backToModeFromSelectBtn.addEventListener('click', () => {
+        playAudio(clickSound);
+        playMode = "all";
+        hideAllScreens();
+        startScreen.classList.remove('hidden');
+        modeSelectSection.classList.remove('hidden');
+        allPlaySubMenu.classList.add('hidden');
+    });
+
     if (startNewBtn) {
         startNewBtn.addEventListener('click', () => {
             playAudio(clickSound);
+            playMode = "all";
+            const tempCleared = [...clearedGroups];
             localStorage.removeItem('isomerApp_full_progress');
+            clearedGroups = tempCleared;
             loadQuiz(0);
         });
     }
@@ -1109,6 +1181,8 @@
     if (restartGameBtn) {
         restartGameBtn.addEventListener('click', () => {
             playAudio(clickSound);
+            clearedGroups = [];
+            playMode = "all";
             loadQuiz(0);
         });
     }
@@ -1120,11 +1194,19 @@
     const rawData = localStorage.getItem('isomerApp_full_progress');
     
     if (rawData) {
+        try {
+            const saved = JSON.parse(rawData);
+            clearedGroups = saved.clearedGroups || [];
+        } catch(e) {
+            clearedGroups = [];
+        }
         if(startScreen) startScreen.classList.remove('hidden');
-        if(startResumeBtn) startResumeBtn.classList.remove('hidden');
+        if(modeSelectSection) modeSelectSection.classList.remove('hidden');
+        if(allPlaySubMenu) allPlaySubMenu.classList.add('hidden');
     } else {
         if(startScreen) startScreen.classList.remove('hidden');
-        if(startResumeBtn) startResumeBtn.classList.add('hidden');
+        if(modeSelectSection) modeSelectSection.classList.remove('hidden');
+        if(allPlaySubMenu) allPlaySubMenu.classList.add('hidden');
     }
 </script>
 </body>
