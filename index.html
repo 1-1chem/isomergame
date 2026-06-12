@@ -321,7 +321,7 @@
             `「＝O」を結合するので <button style="background-color:#f6645c; padding:3px 8px; font-size:0.85rem; color:white; display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; line-height:1;"><span style="transform:rotate(90deg); margin-bottom:-4px; margin-top:2px; font-size:0.6rem;">＝</span><div style="font-size:0.85rem; font-weight:bold;">O</div></button> を押す`,                `これで完成です！ <span class="action-btn" style="${styleGreenBtn}">提出</span> を押す`
         ]},
         { formulaGroup: "C2H4O2", question: "分子式C<sub>2</sub>H<sub>4</sub>O<sub>2</sub>の異性体", totalIsomers: 2,answers: [["CC(=O)OH"],["C(=O)OC","COC(=O)"]]},
-        { formulaGroup: "C3H6O", question: "分子式C<sub>3</sub>H<sub>6</sub>Oの異性体", totalIsomers: 2,answers: [["CCC(=O)","C(=O)CC"],["CC(=O)C"]]},
+        { formulaGroup: "C3H6O", question: "分子式C<sub>3</sub>H<sub>6</sub>Oのアルデヒドとケトンの異性体", totalIsomers: 2,answers: [["CCC(=O)","C(=O)CC"],["CC(=O)C"]]},
         { formulaGroup: "C4H8O", question: "分子式C<sub>4</sub>H<sub>8</sub>Oのアルデヒドとケトンの異性体", totalIsomers: 3,answers: [["CCCC(=O)","C(=O)CCC"],["CC(=O)CC","CCC(=O)C"],["CC(C)C(=O)","C(=O)C(C)C"]]},
         { formulaGroup: "C3H6O2", question: "分子式C<sub>3</sub>H<sub>6</sub>O<sub>2</sub>のカルボン酸とエステルの異性体", totalIsomers: 3,answers: [["CCC(=O)OH"],["CC(=O)OC","COC(=O)C"],["C(=O)OCC","CCOC(=O)"]]},
         { formulaGroup: "C4H8O2", question: "分子式C<sub>4</sub>H<sub>8</sub>O<sub>2</sub>のカルボン酸とエステルの異性体", totalIsomers: 6,answers: [["CCCC(=O)OH"],["CC(C)C(=O)OH"],["CCC(=O)OC","COC(=O)CC"],["CC(=O)OCC","CCOC(=O)C"],["C(=O)OCCC","CCCOC(=O)"],["C(=O)OC(C)C","CC(C)OC(=O)"]]},
@@ -457,7 +457,7 @@
                 resetBtn.classList.add('hidden');
                 controlMenu.classList.remove('hidden');
                 nextQuizBtn.classList.remove('hidden');
-                showFeedback("全て書しました", "text-complete", 0);
+                showFeedback("全て書きました", "text-complete", 0);
                 canvas.innerHTML = '';
             } else {
                 render();
@@ -1042,7 +1042,7 @@
                             nextQuizBtn.textContent = "次の問題へ";
                         }
 
-                        showFeedback("全て書しました", "text-complete", 0); 
+                        showFeedback("全て書きました", "text-complete", 0); 
                         canvas.innerHTML = '';
                     } else {
                         showFeedback("正解", "text-complete", 2000); 
