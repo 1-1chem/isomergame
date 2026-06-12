@@ -50,8 +50,24 @@
             justify-content: center;
             z-index: 1;
         }
-        .bond-h { width: 20px; height: 32px; font-size: 1.8rem; } 
-        .bond-v { width: 32px; height: 20px; font-size: 1.8rem; transform: rotate(90deg); } 
+        /* 水平（横）方向の結合 */
+        .bond-h { 
+            width: 20px;          /* ← ★棒の「長さ」（X軸方向のサイズ） */
+            height: 32px;         /* ← ★棒の「縦幅」（Y軸方向のサイズ。位置調整に影響） */
+            font-size: 1.8rem;    /* ← ★結合の線の太さ・見え方に影響 */
+            margin-left: 0px;     /*横結合棒を少し右にずらしたい場合 */
+            margin-top: 2px;      /*横結合棒を少し下にずらしたい場合 */
+        } 
+
+        /* 垂直（縦）方向の結合 */
+        .bond-v { 
+            width: 32px;          /* ← ★棒の「横幅」（X軸方向のサイズ。位置調整に影響） */
+            height: 20px;         /* ← ★棒の「長さ」（Y軸方向のサイズ） */
+            font-size: 1.8rem;    /* ← ★結合の線の太さ・見え方に影響 */
+            transform: rotate(90deg); 
+            margin-left: 0px;     /*縦結合棒を少し右にずらしたい場合 */
+            margin-top: 0px;      /*縦結合棒を少し下にずらしたい場合 */
+        }
 
         /* ボタンエリア共通 */
         .button-section, .sub-button-section, .bottom-button-section {
