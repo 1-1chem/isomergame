@@ -26,7 +26,7 @@
             content: '';
             position: absolute;
             top: -4px;
-            left: -2px;
+            left: -5px;
             width: 44px;
             height: 44px;
             border: 2px solid #ef4444;
@@ -65,7 +65,7 @@
             height: 20px;         /* ← ★棒の「長さ」（Y軸方向のサイズ） */
             font-size: 1.8rem;    /* ← ★結合の線の太さ・見え方に影響 */
             transform: rotate(90deg); 
-            margin-left: 0px;     /*縦結合棒を少し右にずらしたい場合 */
+            margin-left: -1px;     /*縦結合棒を少し右にずらしたい場合 */
             margin-top: 0px;      /*縦結合棒を少し下にずらしたい場合 */
         }
 
@@ -77,11 +77,7 @@
             margin-bottom: 12px;
             width: 100%;
         }
-        
-        .flex-nowrap {
-            flex-wrap: nowrap !important;
-        }
-
+        .flex-nowrap {flex-wrap: nowrap !important;  }
         .hidden { display: none !important; }
 
         button {
@@ -97,15 +93,9 @@
             white-space: nowrap;
         }
         button:hover { background-color: #5c5c5c; }
-
         /* 「側鎖を追加」ボタン専用の色設定 */
-        button.add-side-btn {
-            background-color: #2563eb;
-        }
-        button.add-side-btn:hover {
-            background-color: #1d4ed8; 
-        }        
-        
+        button.add-side-btn { background-color: #2563eb; }
+        button.add-side-btn:hover {background-color: #1d4ed8; }        
         /* 下Cボタンと上Cボタン */
         button.action-btn { 
             background-color: #7f7f7f; 
@@ -114,21 +104,12 @@
             justify-content: center;
             align-items: center;
         }
-        button.action-btn:hover {
-             background-color: #212121; }
-        
+        button.action-btn:hover { background-color: #212121; }
         /* 「隣のCへ」ボタン専用の色設定 */
-        button.next-c-btn {
-            background-color: #2563eb; 
-        }
-        button.next-c-btn:hover {
-            background-color: #1d4ed8; 
-        }
-
+        button.next-c-btn { background-color: #2563eb;  }
+        button.next-c-btn:hover { background-color: #1d4ed8;  }
         /* 「－OH」ボタン専用の色設定 */
-        button.oh-btn {
-            background-color: #f6645c; 
-        }
+        button.oh-btn {background-color: #f6645c; }
         button.oh-btn:hover {background-color: #ed3a3a; }
         /* 「＝O」ボタン専用の色設定 */
         button.o-double-btn {background-color: #f6645c; }
@@ -164,12 +145,10 @@
 <div class="container">
     <div id="startScreen" style="padding: 20px 10px;">
         <h1 style="font-size: 1.8rem; color: #2563eb; margin-bottom: 20px; line-height: 1.3;">異性体学習アプリ<br><span style="font-size: 1.1rem; color: #64748b;">〜構造式パズル〜</span></h1>
-        
         <div id="modeSelectSection" style="display: flex; flex-direction: column; gap: 15px; max-width: 280px; margin: 0 auto 25px;">
             <button id="chooseAllBtn" style="background-color: #2563eb; font-size: 1.1rem; padding: 15px;">全問を解く</button>
             <button id="chooseSelectBtn" style="background-color: #a855f7; font-size: 1.1rem; padding: 15px;">分子式別で解く</button>
         </div>
-
         <div id="allPlaySubMenu" class="hidden">
             <p style="font-size: 0.95rem; color: #475569; text-align: left; background-color: #f8fafc; padding: 15px; border-radius: 8px; line-height: 1.6; margin-bottom: 25px;">
                 <strong>【全問クリアモード】</strong><br>
@@ -188,16 +167,17 @@
 
     <div id="quizSelectScreen" class="hidden" style="padding: 20px 10px;">
         <h2 style="font-size: 1.6rem; color: #a855f7; margin-bottom: 10px;">分子式を選択</h2>
-        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 20px;">解きたい分子式を選んでください。<br>
-                ・アルキル基の－Hを省略した構造式を書きます。<br>
-                ・主鎖は横一直線に書きます。<br>
-                ・その問題の構造異性体をすべて見つければクリアです！
-
+        <p style="font-size: 0.9rem; color: #64748b; text-align: left; margin-bottom: 20px;">
+            解きたい分子式を選んでください。<br>
+            ・アルキル基の－Hを省略した構造式を書きます。<br>
+            ・主鎖は横一直線に書きます。<br>
+            ・その問題の構造異性体をすべて見つければクリアです！
         </p>
-        
         <div id="quizListContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; max-width: 450px; margin: 0 auto 25px; padding: 5px;"></div>
-   
-        <button id="backToModeFromSelectBtn" style="background-color: #64748b; font-size: 1rem; padding: 10px 20px;">戻る</button>
+        <div style="display: flex; gap: 10px; max-width: 450px; margin: 0 auto; width: 100%;">
+            <button id="backToModeFromSelectBtn" style="flex: 1; background-color: #64748b; font-size: 1rem; padding: 10px 20px;">戻る</button>
+            <button id="resetFromSelectBtn" style="flex: 1; background-color: #ef4444; font-size: 1rem; padding: 10px 20px;">All Reset</button>
+        </div>
     </div>
 
     <div id="gameClearScreen" class="hidden" style="padding: 30px 10px;">
@@ -1052,12 +1032,13 @@
                         controlMenu.classList.remove('hidden');
                         nextQuizBtn.classList.remove('hidden');
                         
-                        if (playMode === "select" && selectModeCurrentSubIndex + 1 >= selectModeIndices.length) {
-                            nextQuizBtn.textContent = "選択メニューへ戻る";
+                        // グループの最終問題かつ全グループクリアなら「結果確認」、それ以外は「次の問題へ」
+                        const totalGroups = [...new Set(quizList.map(q => q.formulaGroup))].filter(g => g !== "チュートリアル" && g !== "酢酸チュートリアル");
+                        if (playMode === "select" && selectModeCurrentSubIndex + 1 >= selectModeIndices.length && (clearedGroups.length + 1 >= totalGroups.length)) {
+                            nextQuizBtn.textContent = "クリア画面へ！";
                         } else {
                             nextQuizBtn.textContent = "次の問題へ";
                         }
-
                         showFeedback("全て書きました", "text-complete", 0); 
                         canvas.innerHTML = '';
                     } else {
@@ -1084,17 +1065,67 @@
             if (selectModeCurrentSubIndex < selectModeIndices.length) {
                 loadQuiz(selectModeIndices[selectModeCurrentSubIndex]);
             } else {
+                // 現在のグループをクリア済みに登録
                 if (!clearedGroups.includes(selectModeTargetGroup)) {
                     clearedGroups.push(selectModeTargetGroup);
                 }
                 saveCurrentProgress();
                 
-                hideAllScreens();
-                quizSelectScreen.classList.remove('hidden');
-                renderFormulaGroupButtons();
+                // 全ユニークグループ数をカウント（チュートリアル系を除く）
+                const totalGroups = [];
+                quizList.forEach(q => {
+                    if (q.formulaGroup !== "チュートリアル" && q.formulaGroup !== "酢酸チュートリアル") {
+                        if (!totalGroups.includes(q.formulaGroup)) {
+                            totalGroups.push(q.formulaGroup);
+                        }
+                    }
+                });
+
+                // すべてのグループをクリアしたか判定
+                if (clearedGroups.length >= totalGroups.length) {
+                    hideAllScreens();
+                    if(gameClearScreen) gameClearScreen.classList.remove('hidden');
+                    localStorage.removeItem('isomerApp_full_progress'); // クリアしたのでセーブ消去
+                } else {
+                    // まだ残っている場合は選択画面へ
+                    hideAllScreens();
+                    quizSelectScreen.classList.remove('hidden');
+                    renderFormulaGroupButtons();
+                }
             }
         }
     });
+
+    // 分子式別メニュー画面の「All Reset」ボタンの処理
+    const resetFromSelectBtn = document.getElementById('resetFromSelectBtn');
+    if (resetFromSelectBtn) {
+        resetFromSelectBtn.addEventListener('click', () => {
+            if (typeof playAudio === 'function' && typeof clickSound !== 'undefined') {
+                playAudio(clickSound);
+            }
+            
+            // 本当にリセットするか確認する画面（ダイアログ）を出す
+            const confirmReset = confirm("本当にこれまでのゲームデータをすべてリセットしますか？\n（クリア状況がすべて消去されます）");
+            
+            if (confirmReset) {
+                // データを完全にクリア
+                clearedGroups = [];
+                localStorage.removeItem('isomerApp_full_progress');
+                
+                // メニューの分子式ボタン（クリアマークなど）を再描画する関数を呼ぶ
+                // ※ index.html内の関数名に合わせて適宜調整してください（renderFormulaGroupButtons など）
+                if (typeof renderFormulaGroupButtons === 'function') {
+                    renderFormulaGroupButtons();
+                } else if (typeof renderQuizList === 'function') {
+                    renderQuizList(); // グリッドの描画関数名がこちらの場合はこちら
+                }
+                
+                alert("ゲームデータをリセットしました。");
+            }
+        });
+    }
+
+
 
     // ==========================================
     // RESETボタンの長押し判定
@@ -1194,15 +1225,33 @@
         });
     }
 
-    if (restartGameBtn) {
+if (restartGameBtn) {
         restartGameBtn.addEventListener('click', () => {
-            playAudio(clickSound);
-            clearedGroups = [];
-            playMode = "all";
-            loadQuiz(0);
+            if (typeof playAudio === 'function' && typeof clickSound !== 'undefined') {
+                playAudio(clickSound);
+            }
+            
+            // ★ここが重要：メモリ上のクリア記録（済マークのデータ）を完全に空にする
+            clearedGroups = []; 
+            // セーブデータも念のため削除（既に削除されていればそのままでOK）
+            localStorage.removeItem('isomerApp_full_progress');
+            
+            // 画面をすべて隠してから、最初のスタート画面とモード選択画面を表示する
+            hideAllScreens();
+            if (startScreen) startScreen.classList.remove('hidden');
+            if (modeSelectSection) modeSelectSection.classList.remove('hidden');
+            
+            // 全問プレイ側のサブメニュー（中断から再開など）が表示されていれば隠す
+            if (allPlaySubMenu) allPlaySubMenu.classList.add('hidden');
+            
+            // 分子式別メニュー画面のボタン（「済」マークの表示など）を初期状態にリセット
+            if (typeof renderFormulaGroupButtons === 'function') {
+                renderFormulaGroupButtons();
+            } else if (typeof renderQuizList === 'function') {
+                renderQuizList();
+            }
         });
     }
-
     // ==========================================
     // アプリ初期起動処理
     // ==========================================
